@@ -15,7 +15,18 @@ var upgrader = websocket.Upgrader{
 
 func Reader(conn *websocket.Conn) {
 	for {
-		log.Println("nothing...")
+		messageType, p, err := conn.ReadMessage()
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		log.Println(string(p))
+
+		if err := conn.WriteMessage(messageType, p); err != nil {
+			log.Println(err)
+			return
+		}
 	}
 }
 
