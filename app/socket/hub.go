@@ -1,9 +1,5 @@
 package socket
 
-import (
-	"fmt"
-)
-
 type Hub struct {
 	Clients    map[*Client]bool
 	Rooms      map[string]map[*Client]bool
@@ -25,7 +21,6 @@ func NewHub() *Hub {
 
 func (h *Hub) Run() {
 	for {
-		fmt.Println(h.Rooms)
 		select {
 		case client := <-h.Register:
 			// roomTest := h.Rooms[client.RoomID]
@@ -55,5 +50,3 @@ func (h *Hub) Run() {
 		}
 	}
 }
-
-// 1/120/000

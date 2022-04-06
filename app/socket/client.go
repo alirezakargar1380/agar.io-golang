@@ -61,8 +61,9 @@ func (c *Client) ReadPump() {
 			}
 			break
 		}
-		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
 		fmt.Println(message)
+		fmt.Println(string([]byte(message)))
+		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
 
 		c.Hub.Broadcast <- &Message{
 			roomID: c.RoomID,
