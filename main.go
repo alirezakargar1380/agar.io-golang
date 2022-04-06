@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/alirezakargar1380/agar.io-golang/app/socket"
 	"github.com/gorilla/websocket"
 )
 
@@ -13,24 +14,10 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
-func Reader(conn *websocket.Conn) {
-	for {
-		messageType, p, err := conn.ReadMessage()
-		if err != nil {
-			log.Println(err)
-			return
-		}
+func wsEndpoint(hub *socket.Hub, w http.ResponseWriter, r *http.Request) {
+	params := r.URL.Query()
+	roomId := params.Get("d")
 
-		log.Println(string(p))
-
-		if err := conn.WriteMessage(messageType, p); err != nil {
-			log.Println(err)
-			return
-		}
-	}
-}
-
-func wsEndpoint(w http.ResponseWriter, r *http.Request) {
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 
 	ws, err := upgrader.Upgrade(w, r, nil)
@@ -38,12 +25,28 @@ func wsEndpoint(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
+	client := &socket.Client{
+		RoomID: roomId,
+		Hub:    hub,
+		Conn:   ws,
+		Send:   make(chan []byte, 256),
+	}
+	client.Hub.Register <- client
 	log.Println("Client successfully connected...")
-	Reader(ws)
+
+	go client.WritePump()
+	go client.ReadPump()
 }
 
+// 6037 - 6576 - 4606 - 6198
+// 8.5
+
 func setupRoutes() {
-	http.HandleFunc("/ws", wsEndpoint)
+	hub := socket.NewHub()
+	go hub.Run()
+	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		wsEndpoint(hub, w, r)
+	})
 }
 
 func main() {
