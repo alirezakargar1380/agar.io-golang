@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/alirezakargar1380/agar.io-golang/app/socket"
 	"github.com/gorilla/websocket"
@@ -17,6 +18,12 @@ var upgrader = websocket.Upgrader{
 func wsEndpoint(hub *socket.Hub, w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	roomId := params.Get("d")
+	var clientId string = params.Get("client_id")
+	Id, err := strconv.ParseInt(clientId, 0, 64)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 
@@ -26,6 +33,8 @@ func wsEndpoint(hub *socket.Hub, w http.ResponseWriter, r *http.Request) {
 	}
 
 	client := &socket.Client{
+		Client_id: Id,
+		// Client_id: 2,
 		RoomID: roomId,
 		Hub:    hub,
 		Conn:   ws,

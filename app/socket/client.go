@@ -34,10 +34,11 @@ var upgrader = websocket.Upgrader{
 }
 
 type Client struct {
-	RoomID string
-	Hub    *Hub
-	Conn   *websocket.Conn
-	Send   chan []byte
+	RoomID    string
+	Client_id int64
+	Hub       *Hub
+	Conn      *websocket.Conn
+	Send      chan []byte
 }
 
 type Message struct {
@@ -128,7 +129,13 @@ type AA struct {
 	Name string
 }
 
+var agars map[int64]map[string]float64 = make(map[int64]map[string]float64)
+
 func (c *Client) sendResponse(command interface{}, data interface{}) {
+	agars[24] = map[string]float64{
+		"X": 25,
+	}
+	fmt.Println(agars)
 	// this is a test for sending message to client
 	// c.Hub.Broadcast <- &Message{
 	// 	roomID: c.RoomID,
