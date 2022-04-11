@@ -135,21 +135,41 @@ func (c *Client) sendResponse(command interface{}, data interface{}) {
 	// this is a test for sending message to client
 	// c.Hub.Broadcast <- &Message{
 	// 	roomID: c.RoomID,
-	// 	Data:   []byte("test"),
+	// 	Data:   []byte(`{"Command": "/new_agar", "data": ""}`),
 	// }
-	// fmt.Println(data)
+	// for {
+	// 	fmt.Println("sending...")
+	// 	c.Hub.Broadcast <- &Message{
+	// 		roomID: c.RoomID,
+	// 		Data:   []byte(`{"Command": "/new_agar", "data": ""}`),
+	// 	}
+	// }
+	// fmt.Println(command)
 	// return
+
 	switch command {
 	case "/hello":
 		aga := data.(map[string]interface{})
-		fmt.Println(c.Client_id)
 		fmt.Println(aga["X"].(float64))
 		agars[c.Client_id] = map[string]float64{
 			"X": aga["X"].(float64),
 			"Y": aga["Y"].(float64),
 		}
-		fmt.Println(agars)
+		var p map[string]string = make(map[string]string)
+		p["Command"] = "/new_agar"
+		p["x"] = fmt.Sprintf("%v", aga["X"].(float64))
+		p["y"] = fmt.Sprintf("%v", aga["Y"].(float64))
+		js, err := json.Marshal(p)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 
+		c.Hub.Broadcast <- &Message{
+			roomID: c.RoomID,
+			// Data:   []byte(`{"Command": "/new_agar", "x": "", "y": ""}`),
+			Data: []byte(string(js)),
+		}
 		// agar := Agar{
 		// 	X: aga["X"].(float64),
 		// 	Y: aga["Y"].(float64),
