@@ -1,7 +1,7 @@
 package socket
 
 import (
-	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -45,6 +45,11 @@ type Message struct {
 	Data   []byte
 }
 
+type Data struct {
+	Command string
+	Data    interface{}
+}
+
 func (c *Client) ReadPump() {
 	defer func() {
 		c.Hub.Unregister <- c
@@ -61,14 +66,17 @@ func (c *Client) ReadPump() {
 			}
 			break
 		}
-		fmt.Println(message)
-		fmt.Println(string([]byte(message)))
-		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
+		// fmt.Println(string([]byte(message)))
+		var res Data
+		json.Unmarshal([]byte(message), &res)
 
-		c.Hub.Broadcast <- &Message{
-			roomID: c.RoomID,
-			Data:   message,
-		}
+		// var str_message string = string([]byte(message))
+		// message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
+		c.sendResponse(res.Command, res.Data)
+		// c.Hub.Broadcast <- &Message{
+		// 	roomID: c.RoomID,
+		// 	Data:   message,
+		// }
 	}
 }
 
@@ -109,5 +117,48 @@ func (c *Client) WritePump() {
 				return
 			}
 		}
+	}
+}
+
+type Agar struct {
+	X float64
+	Y float64
+}
+type AA struct {
+	Name string
+}
+
+func (c *Client) sendResponse(command interface{}, data interface{}) {
+	// this is a test for sending message to client
+	// c.Hub.Broadcast <- &Message{
+	// 	roomID: c.RoomID,
+	// 	Data:   []byte("test"),
+	// }
+	// fmt.Println(data)
+	// return
+	switch command {
+	case "/hello":
+		// var a Agar = data
+		// data := data
+		// agar := Agar{
+		// 	X: data["X"],
+		// 	Y: data["Y"],
+		// }
+		aga := data.(map[string]interface{})
+		agar := Agar{
+			X: aga["X"].(float64),
+			Y: aga["Y"].(float64),
+		}
+		// fmt.Println("/hello...")
+		fmt.Println(agar.Y - agar.X)
+		break
+	case "/move":
+		fmt.Println("/move...")
+		d := data.(map[string]interface{})
+		var a AA = AA{
+			Name: d["Name"].(string),
+		}
+		fmt.Println(a.Name)
+		break
 	}
 }
