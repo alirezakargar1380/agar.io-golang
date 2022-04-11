@@ -132,10 +132,6 @@ type AA struct {
 var agars map[int64]map[string]float64 = make(map[int64]map[string]float64)
 
 func (c *Client) sendResponse(command interface{}, data interface{}) {
-	agars[24] = map[string]float64{
-		"X": 25,
-	}
-	fmt.Println(agars)
 	// this is a test for sending message to client
 	// c.Hub.Broadcast <- &Message{
 	// 	roomID: c.RoomID,
@@ -145,19 +141,20 @@ func (c *Client) sendResponse(command interface{}, data interface{}) {
 	// return
 	switch command {
 	case "/hello":
-		// var a Agar = data
-		// data := data
-		// agar := Agar{
-		// 	X: data["X"],
-		// 	Y: data["Y"],
-		// }
 		aga := data.(map[string]interface{})
-		agar := Agar{
-			X: aga["X"].(float64),
-			Y: aga["Y"].(float64),
+		fmt.Println(c.Client_id)
+		fmt.Println(aga["X"].(float64))
+		agars[c.Client_id] = map[string]float64{
+			"X": aga["X"].(float64),
+			"Y": aga["Y"].(float64),
 		}
-		// fmt.Println("/hello...")
-		fmt.Println(agar.Y - agar.X)
+		fmt.Println(agars)
+
+		// agar := Agar{
+		// 	X: aga["X"].(float64),
+		// 	Y: aga["Y"].(float64),
+		// }
+		// fmt.Println(agar.Y - agar.X)
 		break
 	case "/move":
 		fmt.Println("/move...")
