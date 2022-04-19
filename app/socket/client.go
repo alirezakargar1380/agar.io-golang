@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/alirezakargar1380/agar.io-golang/app/agar"
 	"github.com/gorilla/websocket"
 )
 
@@ -67,17 +68,10 @@ func (c *Client) ReadPump() {
 			}
 			break
 		}
-		// fmt.Println(string([]byte(message)))
+
 		var res Data
 		json.Unmarshal([]byte(message), &res)
-
-		// var str_message string = string([]byte(message))
-		// message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
 		c.sendResponse(res.Command, res.Data)
-		// c.Hub.Broadcast <- &Message{
-		// 	roomID: c.RoomID,
-		// 	Data:   message,
-		// }
 	}
 }
 
@@ -150,7 +144,7 @@ func (c *Client) sendResponse(command interface{}, data interface{}) {
 	switch command {
 	case "/hello":
 		aga := data.(map[string]interface{})
-		fmt.Println(aga["X"].(float64))
+		// fmt.Println(aga["X"].(float64))
 		agars[c.Client_id] = map[string]float64{
 			"X": aga["X"].(float64),
 			"Y": aga["Y"].(float64),
@@ -165,10 +159,21 @@ func (c *Client) sendResponse(command interface{}, data interface{}) {
 			return
 		}
 
+		dir := &agar.AgarPosition{
+			X: aga["X"].(float64),
+			Y: aga["Y"].(float64),
+		}
+		directions := dir.GetAgarSpace()
+		agar.CheckAgarSpace(directions)
+		// directions := agar.GetAgarSpace(aga["X"].(float64), aga["Y"].(float64))
+		// fmt.Println(directions[0]["x"])
+		// fmt.Println(len(directions))
+		var resp []byte = make([]byte, 0)
+		resp = append(resp, js...)
 		c.Hub.Broadcast <- &Message{
 			roomID: c.RoomID,
 			// Data:   []byte(`{"Command": "/new_agar", "x": "", "y": ""}`),
-			Data: []byte(string(js)),
+			Data: resp,
 		}
 		// agar := Agar{
 		// 	X: aga["X"].(float64),
@@ -178,11 +183,11 @@ func (c *Client) sendResponse(command interface{}, data interface{}) {
 		break
 	case "/move":
 		fmt.Println("/move...")
-		d := data.(map[string]interface{})
-		var a AA = AA{
-			Name: d["Name"].(string),
-		}
-		fmt.Println(a.Name)
+		// d := data.(map[string]interface{})
+		// var a AA = AA{
+		// 	Name: d["Name"].(string),
+		// }
+		// fmt.Println(a.Name)
 		break
 	}
 }
