@@ -16,6 +16,7 @@ var upgrader = websocket.Upgrader{
 }
 
 func wsEndpoint(hub *socket.Hub, w http.ResponseWriter, r *http.Request) {
+
 	params := r.URL.Query()
 	roomId := params.Get("d")
 	var clientId string = params.Get("client_id")
@@ -60,6 +61,7 @@ func setupRoutes() {
 
 func main() {
 	fmt.Println("hello im backEnd agario")
+
 	setupRoutes()
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

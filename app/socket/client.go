@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"time"
 
 	"github.com/alirezakargar1380/agar.io-golang/app/agar"
@@ -21,7 +22,7 @@ const (
 	pingPeriod = (pongWait * 9) / 10
 
 	// Maximum message size allowed from peer.
-	maxMessageSize = 512
+	maxMessageSize = 1024
 )
 
 var (
@@ -29,10 +30,7 @@ var (
 	space   = []byte{' '}
 )
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-}
+var upgrader = websocket.Upgrader{}
 
 type Client struct {
 	RoomID    string
@@ -53,13 +51,44 @@ type Data struct {
 }
 
 func (c *Client) ReadPump() {
+	quit := make(chan struct{})
 	defer func() {
+		fmt.Println("Client disconnected...")
+		quit <- struct{}{}
 		c.Hub.Unregister <- c
 		c.Conn.Close()
 	}()
+
 	c.Conn.SetReadLimit(maxMessageSize)
 	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.Conn.SetPongHandler(func(string) error { c.Conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	ticker := time.NewTicker(5 * time.Second)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				rand.Seed(time.Now().UnixNano())
+				min := 1
+				max := 3000
+				x := rand.Intn(max-min+1) + min
+				// y := rand.Intn(max-min+1) + min
+				// fmt.Println(x)
+				var p map[string]string = make(map[string]string)
+				p["Command"] = "/new_bead"
+				p["x"] = fmt.Sprintf("%v", x)
+				p["y"] = fmt.Sprintf("%v", 300)
+				json, _ := json.Marshal(p)
+				c.Hub.Broadcast <- &Message{
+					roomID: c.RoomID,
+					Data:   []byte(json),
+				}
+			case <-quit:
+				fmt.Println("stoped", c.RoomID)
+				ticker.Stop()
+				return
+			}
+		}
+	}()
 	for {
 		_, message, err := c.Conn.ReadMessage()
 		if err != nil {
@@ -73,6 +102,14 @@ func (c *Client) ReadPump() {
 		json.Unmarshal([]byte(message), &res)
 		c.sendResponse(res.Command, res.Data)
 	}
+
+	// for range time.Tick(time.Second * 5) {
+	// fmt.Println("Foo", c.RoomID)
+	// c.Hub.Broadcast <- &Message{
+	// 	roomID: c.RoomID,
+	// 	Data:   []byte(`{"Command": "/new_bead", "x": "300", "y": "300"}`),
+	// }
+	// }
 }
 
 func (c *Client) WritePump() {
@@ -97,11 +134,11 @@ func (c *Client) WritePump() {
 			w.Write(message)
 
 			// Add queued chat messages to the current websocket message.
-			n := len(c.Send)
-			for i := 0; i < n; i++ {
-				w.Write(newline)
-				w.Write(<-c.Send)
-			}
+			// n := len(c.Send)
+			// for i := 0; i < n; i++ {
+			// 	w.Write(newline)
+			// 	w.Write(<-c.Send)
+			// }
 
 			if err := w.Close(); err != nil {
 				return
