@@ -30,33 +30,37 @@ func (agar *AgarPosition) GetAgarSpace() []map[string]float64 {
 	return dir
 }
 
+var i int = 0
+
 func (agar *AgarPosition) GetAgarSpace2(beads *map[string]int) []map[string]float64 {
 	var dir []map[string]float64
 	for angle := 1; angle <= 360; angle++ {
-		for r := 1; r <= 60; r++ {
+		for r := 60; r >= 50; r-- {
 			var x float64 = float64(r) * math.Sin(math.Pi*2*float64(angle)/360)
 			var y float64 = float64(r) * math.Cos(math.Pi*2*float64(angle)/360)
 			var xx int = int(agar.X + math.Round(float64(x*100))/100)
 			var yy int = int(agar.Y + math.Round(float64(y*100))/100)
 
 			if (*beads)[strconv.Itoa(xx)+"_"+strconv.Itoa(yy)] == 10 {
-				fmt.Println("found")
+				i++
+				fmt.Println(i)
 			}
-			// for key := range *beads {
-			// 	positions := strings.Split(key, "_")
-			// 	beadX, error := strconv.Atoi(positions[0])
-			// 	if error != nil {
-			// 		fmt.Println(error)
-			// 	}
-			// 	beadY, error := strconv.Atoi(positions[1])
-			// 	if error != nil {
-			// 		fmt.Println(error)
-			// 	}
-			// 	if beadX == xx && beadY == yy {
-			// 		fmt.Println("found")
-			// 	}
-			// }
 		}
+		// for key := range *beads {
+		// 	positions := strings.Split(key, "_")
+		// 	beadX, error := strconv.Atoi(positions[0])
+		// 	if error != nil {
+		// 		fmt.Println(error)
+		// 	}
+		// 	beadY, error := strconv.Atoi(positions[1])
+		// 	if error != nil {
+		// 		fmt.Println(error)
+		// 	}
+		// 	if beadX == xx && beadY == yy {
+		// 		fmt.Println("found")
+		// 	}
+		// }
+		// }
 	}
 	return dir
 }
