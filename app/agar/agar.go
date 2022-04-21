@@ -29,19 +29,37 @@ func (agar *AgarPosition) GetAgarSpace() []map[string]float64 {
 	return dir
 }
 
-var dfg int = 0
-
-func CheckAgarSpace(dir []map[string]float64) {
-	// fmt.Println(math.Round(dir[0]["x"]))
-	// isThere := false
+func CheckAgarSpace(dir []map[string]float64, beads *map[string]int) bool {
+	var eat bool = false
 
 	for _, v := range dir {
-		var x int = int(math.Round(v["x"]))
-		// fmt.Println(x)
-		var y int = int(math.Round(v["y"]))
-		if x == int(250) && y == int(250) {
-			dfg++
-			fmt.Println("is there", dfg)
+		if len(*beads) == 0 {
+			return false
 		}
+		var x string = fmt.Sprintf("%v", math.Round(v["x"]))
+		var y string = fmt.Sprintf("%v", math.Round(v["y"]))
+		if (*beads)[x+"_"+y] == 10 {
+			delete(*beads, x+"_"+y)
+			// fmt.Println("found")
+			return true
+		}
+		// for key := range *beads {
+		// 	positions := strings.Split(key, "_")
+		// 	beadX, error := strconv.Atoi(positions[0])
+		// 	if error != nil {
+		// 		fmt.Println(error)
+		// 	}
+		// 	beadY, error := strconv.Atoi(positions[1])
+		// 	if error != nil {
+		// 		fmt.Println(error)
+		// 	}
+		// 	var x int = int(math.Round(v["x"]))
+		// 	var y int = int(math.Round(v["y"]))
+		// 	if x == beadX && y == beadY {
+		// 		fmt.Println("is there")
+		// 	}
+
 	}
+	return eat
+	// }
 }

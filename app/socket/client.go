@@ -25,6 +25,8 @@ const (
 	maxMessageSize = 1024
 )
 
+var Agars map[int64]*AgarDetail = make(map[int64]*AgarDetail)
+
 var (
 	newline = []byte{'\n'}
 	space   = []byte{' '}
@@ -50,6 +52,8 @@ type Data struct {
 	Data    interface{}
 }
 
+var beads map[string]int = make(map[string]int)
+
 func (c *Client) ReadPump() {
 	quit := make(chan struct{})
 	defer func() {
@@ -67,9 +71,12 @@ func (c *Client) ReadPump() {
 		for {
 			select {
 			case <-ticker.C:
+				if len(beads) == 12 {
+					return
+				}
 				rand.Seed(time.Now().UnixNano())
 				min := 1
-				max := 3000
+				max := 500
 				x := rand.Intn(max-min+1) + min
 				// y := rand.Intn(max-min+1) + min
 				// fmt.Println(x)
@@ -77,6 +84,11 @@ func (c *Client) ReadPump() {
 				p["Command"] = "/new_bead"
 				p["x"] = fmt.Sprintf("%v", x)
 				p["y"] = fmt.Sprintf("%v", 300)
+				key := p["x"] + "_" + p["y"]
+				// ms := strings.Split(key, "_")
+				// fmt.Println(ms)
+				beads[key] = 10
+				// fmt.Println(key)
 				json, _ := json.Marshal(p)
 				c.Hub.Broadcast <- &Message{
 					roomID: c.RoomID,
@@ -160,7 +172,11 @@ type AA struct {
 	Name string
 }
 
-var agars map[int64]map[string]float64 = make(map[int64]map[string]float64)
+type AgarDetail struct {
+	// X    float64
+	// Y    float64
+	Size float32
+}
 
 func (c *Client) sendResponse(command interface{}, data interface{}) {
 	// this is a test for sending message to client
@@ -182,18 +198,9 @@ func (c *Client) sendResponse(command interface{}, data interface{}) {
 	case "/hello":
 		aga := data.(map[string]interface{})
 		// fmt.Println(aga["X"].(float64))
-		agars[c.Client_id] = map[string]float64{
-			"X": aga["X"].(float64),
-			"Y": aga["Y"].(float64),
-		}
-		var p map[string]string = make(map[string]string)
-		p["Command"] = "/new_agar"
-		p["x"] = fmt.Sprintf("%v", aga["X"].(float64))
-		p["y"] = fmt.Sprintf("%v", aga["Y"].(float64))
-		js, err := json.Marshal(p)
-		if err != nil {
-			fmt.Println(err)
-			return
+
+		Agars[c.Client_id] = &AgarDetail{
+			Size: Agars[c.Client_id].Size,
 		}
 
 		dir := &agar.AgarPosition{
@@ -201,22 +208,36 @@ func (c *Client) sendResponse(command interface{}, data interface{}) {
 			Y: aga["Y"].(float64),
 		}
 		directions := dir.GetAgarSpace()
-		agar.CheckAgarSpace(directions)
-		// directions := agar.GetAgarSpace(aga["X"].(float64), aga["Y"].(float64))
-		// fmt.Println(directions[0]["x"])
-		// fmt.Println(len(directions))
+		var eatIt bool = agar.CheckAgarSpace(directions, &beads)
+		var res map[string]string = make(map[string]string)
+		if eatIt {
+			// fmt.Println(Agars[c.Client_id].Size)
+			Agars[c.Client_id] = &AgarDetail{
+				// X:    aga["X"].(float64),
+				// Y:    aga["Y"].(float64),
+				Size: Agars[c.Client_id].Size + 0.1,
+			}
+			// fmt.Println(Agars[c.Client_id].Size)
+			res["size"] = fmt.Sprintf("%v", Agars[c.Client_id].Size)
+		}
+
+		res["Command"] = "/new_agar"
+		res["x"] = fmt.Sprintf("%v", aga["X"].(float64))
+		res["y"] = fmt.Sprintf("%v", aga["Y"].(float64))
+
+		js, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
 		var resp []byte = make([]byte, 0)
 		resp = append(resp, js...)
 		c.Hub.Broadcast <- &Message{
 			roomID: c.RoomID,
-			// Data:   []byte(`{"Command": "/new_agar", "x": "", "y": ""}`),
-			Data: resp,
+			Data:   resp,
 		}
-		// agar := Agar{
-		// 	X: aga["X"].(float64),
-		// 	Y: aga["Y"].(float64),
-		// }
-		// fmt.Println(agar.Y - agar.X)
+
 		break
 	case "/move":
 		fmt.Println("/move...")
