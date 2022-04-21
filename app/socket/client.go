@@ -75,15 +75,15 @@ func (c *Client) ReadPump() {
 					return
 				}
 				rand.Seed(time.Now().UnixNano())
-				min := 1
+				min := 10
 				max := 500
 				x := rand.Intn(max-min+1) + min
-				// y := rand.Intn(max-min+1) + min
+				y := rand.Intn(max-min+1) + min
 				// fmt.Println(x)
 				var p map[string]string = make(map[string]string)
 				p["Command"] = "/new_bead"
 				p["x"] = fmt.Sprintf("%v", x)
-				p["y"] = fmt.Sprintf("%v", 300)
+				p["y"] = fmt.Sprintf("%v", y)
 				key := p["x"] + "_" + p["y"]
 				// ms := strings.Split(key, "_")
 				// fmt.Println(ms)
@@ -207,19 +207,17 @@ func (c *Client) sendResponse(command interface{}, data interface{}) {
 			X: aga["X"].(float64),
 			Y: aga["Y"].(float64),
 		}
-		directions := dir.GetAgarSpace()
-		var eatIt bool = agar.CheckAgarSpace(directions, &beads)
+		// directions := dir.GetAgarSpace()
+		dir.GetAgarSpace2(&beads)
+		// var eatIt bool = agar.CheckAgarSpace(directions, &beads)
 		var res map[string]string = make(map[string]string)
-		if eatIt {
-			// fmt.Println(Agars[c.Client_id].Size)
-			Agars[c.Client_id] = &AgarDetail{
-				// X:    aga["X"].(float64),
-				// Y:    aga["Y"].(float64),
-				Size: Agars[c.Client_id].Size + 0.1,
-			}
-			// fmt.Println(Agars[c.Client_id].Size)
-			res["size"] = fmt.Sprintf("%v", Agars[c.Client_id].Size)
-		}
+		// if eatIt {
+		// 	Agars[c.Client_id] = &AgarDetail{
+		// 		Size: Agars[c.Client_id].Size + 0.1,
+		// 	}
+		// 	// fmt.Println(Agars[c.Client_id].Size)
+		// 	res["size"] = fmt.Sprintf("%v", Agars[c.Client_id].Size)
+		// }
 
 		res["Command"] = "/new_agar"
 		res["x"] = fmt.Sprintf("%v", aga["X"].(float64))

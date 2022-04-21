@@ -70,21 +70,7 @@ type St struct {
 
 func main() {
 	fmt.Println("hello im backEnd agario")
-	var person map[string]St = make(map[string]St)
-	person["1"] = St{
-		Name: "ali",
-		Age:  20,
-	}
-	person["2"] = St{
-		Name: "reza",
-		Age:  30,
-	}
-	fmt.Println(person["2"].Age)
-	person["2"] = St{
-		Name: person["2"].Name,
-		Age:  person["2"].Age + 0.1,
-	}
-	fmt.Println(person["2"].Age)
+
 	setupRoutes()
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
