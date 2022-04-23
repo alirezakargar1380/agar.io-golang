@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"math/rand"
 	"time"
 
 	"github.com/alirezakargar1380/agar.io-golang/app/agar"
+	"github.com/alirezakargar1380/agar.io-golang/app/trigonometric_circle"
 	"github.com/gorilla/websocket"
 )
 
@@ -52,7 +52,7 @@ type Data struct {
 	Data    interface{}
 }
 
-var beads map[string]int = make(map[string]int)
+var beads map[string]map[string]int = make(map[string]map[string]int)
 
 func (c *Client) ReadPump() {
 	quit := make(chan struct{})
@@ -66,41 +66,43 @@ func (c *Client) ReadPump() {
 	c.Conn.SetReadLimit(maxMessageSize)
 	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.Conn.SetPongHandler(func(string) error { c.Conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
-	ticker := time.NewTicker(5 * time.Second)
-	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				if len(beads) == 12 {
-					return
-				}
-				rand.Seed(time.Now().UnixNano())
-				min := 10
-				max := 500
-				x := rand.Intn(max-min+1) + min
-				y := rand.Intn(max-min+1) + min
-				// fmt.Println(x)
-				var p map[string]string = make(map[string]string)
-				p["Command"] = "/new_bead"
-				p["x"] = fmt.Sprintf("%v", x)
-				p["y"] = fmt.Sprintf("%v", y)
-				key := p["x"] + "_" + p["y"]
-				// ms := strings.Split(key, "_")
-				// fmt.Println(ms)
-				beads[key] = 10
-				// fmt.Println(key)
-				json, _ := json.Marshal(p)
-				c.Hub.Broadcast <- &Message{
-					roomID: c.RoomID,
-					Data:   []byte(json),
-				}
-			case <-quit:
-				fmt.Println("stoped", c.RoomID)
-				ticker.Stop()
-				return
-			}
-		}
-	}()
+	// ticker := time.NewTicker(1 * time.Second)
+	// go func() {
+	// 	for {
+	// 		select {
+	// 		case <-ticker.C:
+	// 			if len(beads[c.RoomID]) == 12 {
+	// 				fmt.Println("---> beads are full")
+	// 			} else {
+	// 				rand.Seed(time.Now().UnixNano())
+	// 				min := 10
+	// 				max := 500
+	// 				x := rand.Intn(max-min+1) + min
+	// 				y := rand.Intn(max-min+1) + min
+	// 				var p map[string]string = make(map[string]string)
+	// 				p["Command"] = "/new_bead"
+	// 				p["x"] = fmt.Sprintf("%v", x)
+	// 				p["y"] = fmt.Sprintf("%v", y)
+	// 				key := p["x"] + "_" + p["y"]
+	// 				if beads[c.RoomID] == nil {
+	// 					beads[c.RoomID] = make(map[string]int)
+	// 				}
+	// 				beads[c.RoomID][key] = 10
+	// 				json, _ := json.Marshal(p)
+	// 				c.Hub.Broadcast <- &Message{
+	// 					roomID: c.RoomID,
+	// 					Data:   []byte(json),
+	// 				}
+	// 			}
+
+	// 		case <-quit:
+	// 			fmt.Println("stoped", c.RoomID)
+	// 			delete(beads, c.RoomID)
+	// 			ticker.Stop()
+	// 			return
+	// 		}
+	// 	}
+	// }()
 	for {
 		_, message, err := c.Conn.ReadMessage()
 		if err != nil {
@@ -114,7 +116,6 @@ func (c *Client) ReadPump() {
 		json.Unmarshal([]byte(message), &res)
 		c.sendResponse(res.Command, res.Data)
 	}
-
 	// for range time.Tick(time.Second * 5) {
 	// fmt.Println("Foo", c.RoomID)
 	// c.Hub.Broadcast <- &Message{
@@ -145,13 +146,6 @@ func (c *Client) WritePump() {
 			}
 			w.Write(message)
 
-			// Add queued chat messages to the current websocket message.
-			// n := len(c.Send)
-			// for i := 0; i < n; i++ {
-			// 	w.Write(newline)
-			// 	w.Write(<-c.Send)
-			// }
-
 			if err := w.Close(); err != nil {
 				return
 			}
@@ -168,14 +162,13 @@ type Agar struct {
 	X float64
 	Y float64
 }
-type AA struct {
-	Name string
-}
 
 type AgarDetail struct {
-	// X    float64
-	// Y    float64
-	Size float32
+	X      float64
+	Y      float64
+	Size   float32
+	Speed  float32
+	Radius float32
 }
 
 func (c *Client) sendResponse(command interface{}, data interface{}) {
@@ -196,6 +189,7 @@ func (c *Client) sendResponse(command interface{}, data interface{}) {
 
 	switch command {
 	case "/hello":
+		fmt.Println("hello")
 		aga := data.(map[string]interface{})
 		// fmt.Println(aga["X"].(float64))
 
@@ -208,7 +202,6 @@ func (c *Client) sendResponse(command interface{}, data interface{}) {
 			Y: aga["Y"].(float64),
 		}
 		// directions := dir.GetAgarSpace()
-		dir.GetAgarSpace2(&beads)
 		// var eatIt bool = agar.CheckAgarSpace(directions, &beads)
 		var res map[string]string = make(map[string]string)
 		// if eatIt {
@@ -218,6 +211,10 @@ func (c *Client) sendResponse(command interface{}, data interface{}) {
 		// 	// fmt.Println(Agars[c.Client_id].Size)
 		// 	res["size"] = fmt.Sprintf("%v", Agars[c.Client_id].Size)
 		// }
+		var eat bool = dir.GetAgarSpace2(&beads, c.RoomID)
+		if eat {
+			fmt.Println("eat")
+		}
 
 		res["Command"] = "/new_agar"
 		res["x"] = fmt.Sprintf("%v", aga["X"].(float64))
@@ -235,15 +232,39 @@ func (c *Client) sendResponse(command interface{}, data interface{}) {
 			roomID: c.RoomID,
 			Data:   resp,
 		}
-
-		break
 	case "/move":
-		fmt.Println("/move...")
-		// d := data.(map[string]interface{})
-		// var a AA = AA{
-		// 	Name: d["Name"].(string),
-		// }
-		// fmt.Println(a.Name)
-		break
+		d := data.(map[string]interface{})
+		// fmt.Println(d["angle"].(float64))
+		// fmt.Println(Agars[c.Client_id].Speed)
+		tri := &trigonometric_circle.AgarDetail{
+			X:      Agars[c.Client_id].X,
+			Y:      Agars[c.Client_id].Y,
+			Radius: 1.1,
+		}
+		directions := tri.Test(d["angle"].(float64))
+
+		Agars[c.Client_id] = &AgarDetail{
+			X: directions["x"],
+			Y: directions["y"],
+		}
+
+		var res map[string]string = make(map[string]string)
+		res["Command"] = "/m_agar"
+		res["x"] = fmt.Sprintf("%v", directions["x"])
+		res["y"] = fmt.Sprintf("%v", directions["y"])
+
+		js, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		c.Hub.Broadcast <- &Message{
+			roomID: c.RoomID,
+			Data:   js,
+		}
+	default:
+		fmt.Println("def")
 	}
+
 }

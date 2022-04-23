@@ -26,8 +26,12 @@ func wsEndpoint(hub *socket.Hub, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// set default agar size
 	socket.Agars[Id] = &socket.AgarDetail{
-		Size: 1,
+		X:      200,
+		Y:      200,
+		Radius: 60,
+		Speed:  0,
 	}
 
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
@@ -39,11 +43,10 @@ func wsEndpoint(hub *socket.Hub, w http.ResponseWriter, r *http.Request) {
 
 	client := &socket.Client{
 		Client_id: Id,
-		// Client_id: 2,
-		RoomID: roomId,
-		Hub:    hub,
-		Conn:   ws,
-		Send:   make(chan []byte, 256),
+		RoomID:    roomId,
+		Hub:       hub,
+		Conn:      ws,
+		Send:      make(chan []byte, 256),
 	}
 	client.Hub.Register <- client
 	log.Println("Client successfully connected...")
@@ -51,9 +54,6 @@ func wsEndpoint(hub *socket.Hub, w http.ResponseWriter, r *http.Request) {
 	go client.WritePump()
 	go client.ReadPump()
 }
-
-// 6037 - 6576 - 4606 - 6198
-// 8.5
 
 func setupRoutes() {
 	hub := socket.NewHub()
@@ -68,9 +68,10 @@ type St struct {
 	Age  float64
 }
 
+var i int = 0
+
 func main() {
 	fmt.Println("hello im backEnd agario")
-
 	setupRoutes()
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

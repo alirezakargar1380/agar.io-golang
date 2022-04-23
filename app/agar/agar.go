@@ -3,7 +3,6 @@ package agar
 import (
 	"fmt"
 	"math"
-	"strconv"
 )
 
 type AgarPosition struct {
@@ -30,39 +29,45 @@ func (agar *AgarPosition) GetAgarSpace() []map[string]float64 {
 	return dir
 }
 
-var i int = 0
+// var i int = 0
 
-func (agar *AgarPosition) GetAgarSpace2(beads *map[string]int) []map[string]float64 {
-	var dir []map[string]float64
+func (agar *AgarPosition) GetAgarSpace2(beads *map[string]map[string]int, RoomId string) bool {
+	var dir []map[string]int = make([]map[string]int, 0)
 	for angle := 1; angle <= 360; angle++ {
-		for r := 60; r >= 50; r-- {
+		for r := 60; r >= 55; r-- {
 			var x float64 = float64(r) * math.Sin(math.Pi*2*float64(angle)/360)
 			var y float64 = float64(r) * math.Cos(math.Pi*2*float64(angle)/360)
 			var xx int = int(agar.X + math.Round(float64(x*100))/100)
 			var yy int = int(agar.Y + math.Round(float64(y*100))/100)
 
-			if (*beads)[strconv.Itoa(xx)+"_"+strconv.Itoa(yy)] == 10 {
-				i++
-				fmt.Println(i)
-			}
+			myMap := make(map[string]int, 0)
+			myMap["x"] = xx
+			myMap["y"] = yy
+			dir = append(dir, myMap)
+
+			// if (*beads)[RoomId][strconv.Itoa(xx)+"_"+strconv.Itoa(yy)] == 10 {
+			// 	var str_x = fmt.Sprintf("%v", xx)
+			// 	var str_y = fmt.Sprintf("%v", yy)
+			// 	delete((*beads)[RoomId], str_x+"_"+str_y)
+			// 	return true
+			// } else {
+			// 	return false
+			// }
+
 		}
-		// for key := range *beads {
-		// 	positions := strings.Split(key, "_")
-		// 	beadX, error := strconv.Atoi(positions[0])
-		// 	if error != nil {
-		// 		fmt.Println(error)
-		// 	}
-		// 	beadY, error := strconv.Atoi(positions[1])
-		// 	if error != nil {
-		// 		fmt.Println(error)
-		// 	}
-		// 	if beadX == xx && beadY == yy {
-		// 		fmt.Println("found")
-		// 	}
-		// }
-		// }
 	}
-	return dir
+
+	var eat bool = false
+	for _, v := range dir {
+		var x string = fmt.Sprintf("%v", v["x"])
+		var y string = fmt.Sprintf("%v", v["y"])
+		if (*beads)[RoomId][x+"_"+y] == 10 {
+			delete((*beads)[RoomId], x+"_"+y)
+			// fmt.Println("found")
+			return true
+		}
+	}
+	return eat
 }
 
 func CheckAgarSpace(dir []map[string]float64, beads *map[string]int) bool {
