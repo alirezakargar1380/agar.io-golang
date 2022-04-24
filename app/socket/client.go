@@ -253,7 +253,6 @@ func (c *Client) sendResponse(command interface{}, data interface{}) {
 				}
 			}
 		}
-		// fmt.Println(Agars[c.Client_id].Speed)
 		tri := &trigonometric_circle.AgarDetail{
 			X:      Agars[c.Client_id].X,
 			Y:      Agars[c.Client_id].Y,
