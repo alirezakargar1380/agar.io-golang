@@ -68,13 +68,8 @@ type St struct {
 	Age  float64
 }
 
-var i int = 0
-
 func main() {
 	fmt.Println("hello im backEnd agario")
-	var dd float64 = (65.43 * 100) * 5 / 100
-	fmt.Println(dd / 100)
-
 	setupRoutes()
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

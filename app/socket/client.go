@@ -243,28 +243,16 @@ func (c *Client) sendResponse(command interface{}, data interface{}) {
 			// fmt.Println(dd/100, Agars[c.Client_id].Speed)
 			if dd/100 == 5 {
 				if Agars[c.Client_id].Speed < dd/100 {
-					Agars[c.Client_id] = &AgarDetail{
-						Speed: Agars[c.Client_id].Speed + 0.1,
-						X:     Agars[c.Client_id].X,
-						Y:     Agars[c.Client_id].Y,
-					}
+					Agars[c.Client_id].Speed += 0.1
 				}
 			} else {
 				if Agars[c.Client_id].Speed > dd/100 {
-					Agars[c.Client_id] = &AgarDetail{
-						Speed: Agars[c.Client_id].Speed - 0.1,
-						X:     Agars[c.Client_id].X,
-						Y:     Agars[c.Client_id].Y,
-					}
+					Agars[c.Client_id].Speed -= 0.1
 				}
 			}
 		} else {
 			if Agars[c.Client_id].Speed >= 0.10 {
-				Agars[c.Client_id] = &AgarDetail{
-					Speed: Agars[c.Client_id].Speed - 0.06,
-					X:     Agars[c.Client_id].X,
-					Y:     Agars[c.Client_id].Y,
-				}
+				Agars[c.Client_id].Speed -= 0.06
 			}
 		}
 		tri := &trigonometric_circle.AgarDetail{
@@ -274,11 +262,8 @@ func (c *Client) sendResponse(command interface{}, data interface{}) {
 		}
 		directions := tri.Test(d["angle"].(float64))
 
-		Agars[c.Client_id] = &AgarDetail{
-			X:     directions["x"],
-			Y:     directions["y"],
-			Speed: Agars[c.Client_id].Speed,
-		}
+		Agars[c.Client_id].X = directions["x"]
+		Agars[c.Client_id].Y = directions["y"]
 
 		var res map[string]string = make(map[string]string)
 		res["Command"] = "/m_agar"
