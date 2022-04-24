@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"math/rand"
 	"time"
 
@@ -234,14 +235,27 @@ func (c *Client) sendResponse(command interface{}, data interface{}) {
 			Data:   resp,
 		}
 	case "/move":
-		// fmt.Println(Agars[c.Client_id].Speed)
 		d := data.(map[string]interface{})
+
 		if d["opration"].(string) == "increse" {
-			if Agars[c.Client_id].Speed <= 5 {
-				Agars[c.Client_id] = &AgarDetail{
-					Speed: Agars[c.Client_id].Speed + 0.1,
-					X:     Agars[c.Client_id].X,
-					Y:     Agars[c.Client_id].Y,
+			percent_of_speed := math.Round(float64(d["percent_of_speed"].(float64)))
+			var dd float32 = float32(percent_of_speed*100) * 5 / 100
+			// fmt.Println(dd/100, Agars[c.Client_id].Speed)
+			if dd/100 == 5 {
+				if Agars[c.Client_id].Speed < dd/100 {
+					Agars[c.Client_id] = &AgarDetail{
+						Speed: Agars[c.Client_id].Speed + 0.1,
+						X:     Agars[c.Client_id].X,
+						Y:     Agars[c.Client_id].Y,
+					}
+				}
+			} else {
+				if Agars[c.Client_id].Speed > dd/100 {
+					Agars[c.Client_id] = &AgarDetail{
+						Speed: Agars[c.Client_id].Speed - 0.1,
+						X:     Agars[c.Client_id].X,
+						Y:     Agars[c.Client_id].Y,
+					}
 				}
 			}
 		} else {
