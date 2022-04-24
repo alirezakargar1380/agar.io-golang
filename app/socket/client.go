@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"time"
 
 	"github.com/alirezakargar1380/agar.io-golang/app/agar"
@@ -66,43 +67,43 @@ func (c *Client) ReadPump() {
 	c.Conn.SetReadLimit(maxMessageSize)
 	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.Conn.SetPongHandler(func(string) error { c.Conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
-	// ticker := time.NewTicker(1 * time.Second)
-	// go func() {
-	// 	for {
-	// 		select {
-	// 		case <-ticker.C:
-	// 			if len(beads[c.RoomID]) == 12 {
-	// 				fmt.Println("---> beads are full")
-	// 			} else {
-	// 				rand.Seed(time.Now().UnixNano())
-	// 				min := 10
-	// 				max := 500
-	// 				x := rand.Intn(max-min+1) + min
-	// 				y := rand.Intn(max-min+1) + min
-	// 				var p map[string]string = make(map[string]string)
-	// 				p["Command"] = "/new_bead"
-	// 				p["x"] = fmt.Sprintf("%v", x)
-	// 				p["y"] = fmt.Sprintf("%v", y)
-	// 				key := p["x"] + "_" + p["y"]
-	// 				if beads[c.RoomID] == nil {
-	// 					beads[c.RoomID] = make(map[string]int)
-	// 				}
-	// 				beads[c.RoomID][key] = 10
-	// 				json, _ := json.Marshal(p)
-	// 				c.Hub.Broadcast <- &Message{
-	// 					roomID: c.RoomID,
-	// 					Data:   []byte(json),
-	// 				}
-	// 			}
+	ticker := time.NewTicker(1 * time.Second)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				if len(beads[c.RoomID]) == 12 {
+					// fmt.Println("---> beads are full")
+				} else {
+					rand.Seed(time.Now().UnixNano())
+					min := 10
+					max := 500
+					x := rand.Intn(max-min+1) + min
+					y := rand.Intn(max-min+1) + min
+					var p map[string]string = make(map[string]string)
+					p["Command"] = "/new_bead"
+					p["x"] = fmt.Sprintf("%v", x)
+					p["y"] = fmt.Sprintf("%v", y)
+					key := p["x"] + "_" + p["y"]
+					if beads[c.RoomID] == nil {
+						beads[c.RoomID] = make(map[string]int)
+					}
+					beads[c.RoomID][key] = 10
+					json, _ := json.Marshal(p)
+					c.Hub.Broadcast <- &Message{
+						roomID: c.RoomID,
+						Data:   []byte(json),
+					}
+				}
 
-	// 		case <-quit:
-	// 			fmt.Println("stoped", c.RoomID)
-	// 			delete(beads, c.RoomID)
-	// 			ticker.Stop()
-	// 			return
-	// 		}
-	// 	}
-	// }()
+			case <-quit:
+				fmt.Println("stoped", c.RoomID)
+				delete(beads, c.RoomID)
+				ticker.Stop()
+				return
+			}
+		}
+	}()
 	for {
 		_, message, err := c.Conn.ReadMessage()
 		if err != nil {
@@ -233,25 +234,44 @@ func (c *Client) sendResponse(command interface{}, data interface{}) {
 			Data:   resp,
 		}
 	case "/move":
+		// fmt.Println(Agars[c.Client_id].Speed)
 		d := data.(map[string]interface{})
-		// fmt.Println(d["angle"].(float64))
+		if d["opration"].(string) == "increse" {
+			if Agars[c.Client_id].Speed <= 5 {
+				Agars[c.Client_id] = &AgarDetail{
+					Speed: Agars[c.Client_id].Speed + 0.1,
+					X:     Agars[c.Client_id].X,
+					Y:     Agars[c.Client_id].Y,
+				}
+			}
+		} else {
+			if Agars[c.Client_id].Speed >= 0.10 {
+				Agars[c.Client_id] = &AgarDetail{
+					Speed: Agars[c.Client_id].Speed - 0.06,
+					X:     Agars[c.Client_id].X,
+					Y:     Agars[c.Client_id].Y,
+				}
+			}
+		}
 		// fmt.Println(Agars[c.Client_id].Speed)
 		tri := &trigonometric_circle.AgarDetail{
 			X:      Agars[c.Client_id].X,
 			Y:      Agars[c.Client_id].Y,
-			Radius: 1.1,
+			Radius: float64(Agars[c.Client_id].Speed),
 		}
 		directions := tri.Test(d["angle"].(float64))
 
 		Agars[c.Client_id] = &AgarDetail{
-			X: directions["x"],
-			Y: directions["y"],
+			X:     directions["x"],
+			Y:     directions["y"],
+			Speed: Agars[c.Client_id].Speed,
 		}
 
 		var res map[string]string = make(map[string]string)
 		res["Command"] = "/m_agar"
 		res["x"] = fmt.Sprintf("%v", directions["x"])
 		res["y"] = fmt.Sprintf("%v", directions["y"])
+		res["speed"] = fmt.Sprintf("%v", Agars[c.Client_id].Speed)
 
 		js, err := json.Marshal(res)
 		if err != nil {
