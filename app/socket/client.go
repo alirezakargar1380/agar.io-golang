@@ -73,8 +73,8 @@ func (c *Client) ReadPump() {
 		for {
 			select {
 			case <-ticker.C:
-				if len(beads[c.RoomID]) == 12 {
-					// fmt.Println("---> beads are full")
+				if len(beads[c.RoomID]) == 200 {
+					fmt.Println("---> beads are full")
 				} else {
 					rand.Seed(time.Now().UnixNano())
 					min := 10
@@ -199,10 +199,10 @@ func (c *Client) sendResponse(command interface{}, data interface{}) {
 			Size: Agars[c.Client_id].Size,
 		}
 
-		dir := &agar.AgarPosition{
-			X: aga["X"].(float64),
-			Y: aga["Y"].(float64),
-		}
+		// dir := &agar.AgarPosition{
+		// 	X: aga["X"].(float64),
+		// 	Y: aga["Y"].(float64),
+		// }
 		// directions := dir.GetAgarSpace()
 		// var eatIt bool = agar.CheckAgarSpace(directions, &beads)
 		var res map[string]string = make(map[string]string)
@@ -213,10 +213,10 @@ func (c *Client) sendResponse(command interface{}, data interface{}) {
 		// 	// fmt.Println(Agars[c.Client_id].Size)
 		// 	res["size"] = fmt.Sprintf("%v", Agars[c.Client_id].Size)
 		// }
-		var eat bool = dir.GetAgarSpace2(&beads, c.RoomID)
-		if eat {
-			fmt.Println("eat")
-		}
+		// var eat bool = dir.GetAgarSpace2(&beads, c.RoomID)
+		// if eat {
+		// 	fmt.Println("eat")
+		// }
 
 		res["Command"] = "/new_agar"
 		res["x"] = fmt.Sprintf("%v", aga["X"].(float64))
@@ -262,10 +262,25 @@ func (c *Client) sendResponse(command interface{}, data interface{}) {
 		}
 		directions := tri.Test(d["angle"].(float64))
 
+		// Making response
+		var res map[string]string = make(map[string]string)
+		// Check is eat or not
+		dir := &agar.AgarPosition{
+			X:      directions["x"],
+			Y:      directions["y"],
+			Radius: int(Agars[c.Client_id].Radius),
+		}
+		var eat agar.Re = dir.GetAgarSpace2(&beads, c.RoomID)
+		if eat.Eat {
+			// fmt.Println("eat " + eat.Eat_key)
+			res["eat_key"] = eat.Eat_key
+			Agars[c.Client_id].Radius += 15
+			res["size"] = fmt.Sprintf("%v", Agars[c.Client_id].Radius)
+		}
+
 		Agars[c.Client_id].X = directions["x"]
 		Agars[c.Client_id].Y = directions["y"]
 
-		var res map[string]string = make(map[string]string)
 		res["Command"] = "/m_agar"
 		res["x"] = fmt.Sprintf("%v", directions["x"])
 		res["y"] = fmt.Sprintf("%v", directions["y"])

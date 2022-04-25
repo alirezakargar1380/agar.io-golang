@@ -6,8 +6,9 @@ import (
 )
 
 type AgarPosition struct {
-	X float64
-	Y float64
+	X      float64
+	Y      float64
+	Radius int
 }
 
 func (agar *AgarPosition) GetAgarSpace() []map[string]float64 {
@@ -31,10 +32,15 @@ func (agar *AgarPosition) GetAgarSpace() []map[string]float64 {
 
 // var i int = 0
 
-func (agar *AgarPosition) GetAgarSpace2(beads *map[string]map[string]int, RoomId string) bool {
+type Re struct {
+	Eat     bool
+	Eat_key string
+}
+
+func (agar *AgarPosition) GetAgarSpace2(beads *map[string]map[string]int, RoomId string) Re {
 	var dir []map[string]int = make([]map[string]int, 0)
 	for angle := 1; angle <= 360; angle++ {
-		for r := 60; r >= 55; r-- {
+		for r := agar.Radius; r >= (agar.Radius - 10); r-- {
 			var x float64 = float64(r) * math.Sin(math.Pi*2*float64(angle)/360)
 			var y float64 = float64(r) * math.Cos(math.Pi*2*float64(angle)/360)
 			var xx int = int(agar.X + math.Round(float64(x*100))/100)
@@ -57,17 +63,23 @@ func (agar *AgarPosition) GetAgarSpace2(beads *map[string]map[string]int, RoomId
 		}
 	}
 
-	var eat bool = false
 	for _, v := range dir {
 		var x string = fmt.Sprintf("%v", v["x"])
 		var y string = fmt.Sprintf("%v", v["y"])
 		if (*beads)[RoomId][x+"_"+y] == 10 {
 			delete((*beads)[RoomId], x+"_"+y)
 			// fmt.Println("found")
-			return true
+			return Re{
+				Eat:     true,
+				Eat_key: x + "_" + y,
+			}
 		}
 	}
-	return eat
+
+	return Re{
+		Eat:     false,
+		Eat_key: "",
+	}
 }
 
 func CheckAgarSpace(dir []map[string]float64, beads *map[string]int) bool {
