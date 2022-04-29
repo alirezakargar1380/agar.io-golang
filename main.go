@@ -5,7 +5,9 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"sync"
 
+	"github.com/alirezakargar1380/agar.io-golang/app/beads"
 	"github.com/alirezakargar1380/agar.io-golang/app/socket"
 	"github.com/gorilla/websocket"
 )
@@ -28,10 +30,11 @@ func wsEndpoint(hub *socket.Hub, w http.ResponseWriter, r *http.Request) {
 
 	// set default agar size
 	socket.Agars[Id] = &socket.AgarDetail{
-		X:      200,
-		Y:      200,
-		Radius: 60,
-		Speed:  0,
+		X:         200,
+		Y:         200,
+		Radius:    60,
+		Speed:     0,
+		Max_Speed: 5,
 	}
 
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
@@ -63,13 +66,53 @@ func setupRoutes() {
 	})
 }
 
-type St struct {
-	Name string
-	Age  float64
-}
-
 func main() {
 	fmt.Println("hello im backEnd agario")
+	room := "game"
+	c1 := make(chan bool)
+	beads := &beads.Beads{
+		Beads: make(map[string]map[string]int),
+	}
+
+	if beads.Beads[room] == nil {
+		beads.Beads[room] = make(map[string]int)
+	}
+
+	var wg sync.WaitGroup
+	makeCoordinate := func(room string) {
+		for x := 0; x < 10000; x++ {
+			for y := 0; y < 3; y++ {
+				sx := fmt.Sprintf("%v", x)
+				sy := fmt.Sprintf("%v", y)
+				beads.Set(room, sx+"_"+sy)
+			}
+		}
+		wg.Done()
+		// c1 <- true
+	}
+
+	checkCoordinate := func(room string) {
+		for x := 0; x < 10000; x++ {
+			for y := 0; y < 3; y++ {
+				sx := fmt.Sprintf("%v", x)
+				sy := fmt.Sprintf("%v", y)
+				beads.Exist(room, sx+"_"+sy)
+			}
+		}
+		wg.Done()
+		c1 <- true
+	}
+
+	wg.Add(2)
+	go makeCoordinate(room)
+	go checkCoordinate(room)
+	wg.Wait()
+
+	select {
+	case <-c1:
+		fmt.Println(len(beads.Beads[room]))
+	}
+
 	setupRoutes()
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

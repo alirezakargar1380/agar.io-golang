@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/alirezakargar1380/agar.io-golang/app/agar"
+	"github.com/alirezakargar1380/agar.io-golang/app/beads"
 	"github.com/alirezakargar1380/agar.io-golang/app/trigonometric_circle"
 	"github.com/gorilla/websocket"
 )
@@ -54,7 +55,7 @@ type Data struct {
 	Data    interface{}
 }
 
-var beads map[string]map[string]int = make(map[string]map[string]int)
+// var beads map[string]map[string]int = make(map[string]map[string]int)
 
 func (c *Client) ReadPump() {
 	quit := make(chan struct{})
@@ -69,16 +70,22 @@ func (c *Client) ReadPump() {
 	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.Conn.SetPongHandler(func(string) error { c.Conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	ticker := time.NewTicker(1 * time.Second)
+	beads := &beads.Beads{
+		Beads: make(map[string]map[string]int),
+	}
+	if beads.Beads[c.RoomID] == nil {
+		beads.Beads[c.RoomID] = make(map[string]int)
+	}
 	go func() {
 		for {
 			select {
 			case <-ticker.C:
-				if len(beads[c.RoomID]) == 200 {
+				if len(beads.Beads[c.RoomID]) == 200 {
 					fmt.Println("---> beads are full")
 				} else {
-					rand.Seed(time.Now().UnixNano())
-					min := 10
-					max := 500
+					// 	rand.Seed(time.Now().UnixNano())
+					min := 500
+					max := 1000
 					x := rand.Intn(max-min+1) + min
 					y := rand.Intn(max-min+1) + min
 					var p map[string]string = make(map[string]string)
@@ -86,20 +93,17 @@ func (c *Client) ReadPump() {
 					p["x"] = fmt.Sprintf("%v", x)
 					p["y"] = fmt.Sprintf("%v", y)
 					key := p["x"] + "_" + p["y"]
-					if beads[c.RoomID] == nil {
-						beads[c.RoomID] = make(map[string]int)
-					}
-					beads[c.RoomID][key] = 10
+					beads.Set(c.RoomID, key)
 					json, _ := json.Marshal(p)
 					c.Hub.Broadcast <- &Message{
 						roomID: c.RoomID,
 						Data:   []byte(json),
 					}
 				}
-
+				// fmt.Println(len(beads.Beads[c.RoomID]))
 			case <-quit:
 				fmt.Println("stoped", c.RoomID)
-				delete(beads, c.RoomID)
+				// delete(beads, c.RoomID)
 				ticker.Stop()
 				return
 			}
@@ -116,7 +120,7 @@ func (c *Client) ReadPump() {
 
 		var res Data
 		json.Unmarshal([]byte(message), &res)
-		c.sendResponse(res.Command, res.Data)
+		c.sendResponse(beads, res.Command, res.Data)
 	}
 	// for range time.Tick(time.Second * 5) {
 	// fmt.Println("Foo", c.RoomID)
@@ -166,14 +170,15 @@ type Agar struct {
 }
 
 type AgarDetail struct {
-	X      float64
-	Y      float64
-	Size   float32
-	Speed  float32
-	Radius float32
+	X         float64
+	Y         float64
+	Size      float32
+	Speed     float32
+	Radius    float32
+	Max_Speed float64
 }
 
-func (c *Client) sendResponse(command interface{}, data interface{}) {
+func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data interface{}) {
 	// this is a test for sending message to client
 	// c.Hub.Broadcast <- &Message{
 	// 	roomID: c.RoomID,
@@ -239,9 +244,9 @@ func (c *Client) sendResponse(command interface{}, data interface{}) {
 
 		if d["opration"].(string) == "increse" {
 			percent_of_speed := math.Round(float64(d["percent_of_speed"].(float64)))
-			var dd float32 = float32(percent_of_speed*100) * 5 / 100
-			// fmt.Println(dd/100, Agars[c.Client_id].Speed)
-			if dd/100 == 5 {
+			var dd float32 = float32(percent_of_speed*100) * float32(Agars[c.Client_id].Max_Speed) / 100
+			// fmt.Println(Agars[c.Client_id].Max_Speed)
+			if dd/100 == float32(Agars[c.Client_id].Max_Speed) {
 				if Agars[c.Client_id].Speed < dd/100 {
 					Agars[c.Client_id].Speed += 0.1
 				}
@@ -265,18 +270,28 @@ func (c *Client) sendResponse(command interface{}, data interface{}) {
 		// Making response
 		var res map[string]string = make(map[string]string)
 		// Check is eat or not
+		// Agars[c.Client_id].Radius = 200
 		dir := &agar.AgarPosition{
 			X:      directions["x"],
 			Y:      directions["y"],
 			Radius: int(Agars[c.Client_id].Radius),
 		}
-		var eat agar.Re = dir.GetAgarSpace2(&beads, c.RoomID)
+		eat := dir.GetAgarSpace4(beads, c.RoomID)
 		if eat.Eat {
-			// fmt.Println("eat " + eat.Eat_key)
+			Agars[c.Client_id].Radius += 2
 			res["eat_key"] = eat.Eat_key
-			Agars[c.Client_id].Radius += 15
+			// Agars[c.Client_id].Max_Speed -= 0.1
 			res["size"] = fmt.Sprintf("%v", Agars[c.Client_id].Radius)
+			delete(beads.Beads[c.RoomID], eat.Eat_key)
 		}
+
+		// eat := dir.GetAgarSpace3(beads, c.RoomID)
+		// if eat.Eat {
+		// 	res["eat_key"] = eat.Eat_key
+		// 	Agars[c.Client_id].Radius += 2
+		// 	Agars[c.Client_id].Max_Speed -= 0.1
+		// 	res["size"] = fmt.Sprintf("%v", Agars[c.Client_id].Radius)
+		// }
 
 		Agars[c.Client_id].X = directions["x"]
 		Agars[c.Client_id].Y = directions["y"]

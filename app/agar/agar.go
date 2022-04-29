@@ -3,6 +3,11 @@ package agar
 import (
 	"fmt"
 	"math"
+	"strconv"
+	"strings"
+	"sync"
+
+	"github.com/alirezakargar1380/agar.io-golang/app/beads"
 )
 
 type AgarPosition struct {
@@ -30,51 +35,128 @@ func (agar *AgarPosition) GetAgarSpace() []map[string]float64 {
 	return dir
 }
 
-// var i int = 0
-
 type Re struct {
 	Eat     bool
 	Eat_key string
 }
 
-func (agar *AgarPosition) GetAgarSpace2(beads *map[string]map[string]int, RoomId string) Re {
-	var dir []map[string]int = make([]map[string]int, 0)
-	for angle := 1; angle <= 360; angle++ {
-		for r := agar.Radius; r >= (agar.Radius - 10); r-- {
-			var x float64 = float64(r) * math.Sin(math.Pi*2*float64(angle)/360)
-			var y float64 = float64(r) * math.Cos(math.Pi*2*float64(angle)/360)
-			var xx int = int(agar.X + math.Round(float64(x*100))/100)
-			var yy int = int(agar.Y + math.Round(float64(y*100))/100)
+type Eat struct {
+	eat bool
+	key string
+}
 
-			myMap := make(map[string]int, 0)
-			myMap["x"] = xx
-			myMap["y"] = yy
-			dir = append(dir, myMap)
+func (agar *AgarPosition) getDistance(to_x float64, to_y float64) float64 {
+	var x float64 = to_y - float64(agar.Y)
+	var y float64 = to_x - float64(agar.X)
+	return math.Sqrt(x*x + y*y)
+}
 
-			// if (*beads)[RoomId][strconv.Itoa(xx)+"_"+strconv.Itoa(yy)] == 10 {
-			// 	var str_x = fmt.Sprintf("%v", xx)
-			// 	var str_y = fmt.Sprintf("%v", yy)
-			// 	delete((*beads)[RoomId], str_x+"_"+str_y)
-			// 	return true
-			// } else {
-			// 	return false
-			// }
-
+func (agar *AgarPosition) GetAgarSpace4(beads *beads.Beads, RoomId string) Re {
+	var eat bool = false
+	var eatKey string = ""
+	for key := range beads.Beads[RoomId] {
+		positions := strings.Split(key, "_")
+		beadX, error := strconv.Atoi(positions[0])
+		if error != nil {
+			fmt.Println(error)
+		}
+		beadY, error := strconv.Atoi(positions[1])
+		if error != nil {
+			fmt.Println(error)
+		}
+		if agar.getDistance(float64(beadX), float64(beadY)) < float64(agar.Radius) {
+			eat = true
+			eatKey = key
 		}
 	}
 
-	for _, v := range dir {
-		var x string = fmt.Sprintf("%v", v["x"])
-		var y string = fmt.Sprintf("%v", v["y"])
-		if (*beads)[RoomId][x+"_"+y] == 10 {
-			delete((*beads)[RoomId], x+"_"+y)
-			// fmt.Println("found")
-			return Re{
+	return Re{
+		Eat:     eat,
+		Eat_key: eatKey,
+	}
+}
+
+func (agar *AgarPosition) GetAgarSpace3(beads *beads.Beads, RoomId string) Re {
+	var wg sync.WaitGroup
+	c1 := make(chan Eat)
+	checkBeadIsExist := func(room string) {
+		radius14 := math.Round(float64(agar.Radius / 3))
+		var eatKey Eat = Eat{
+			eat: false,
+			key: "",
+		}
+		for angle := 1; angle <= 360; angle++ {
+			for r := agar.Radius; r >= (agar.Radius - int(radius14)); r-- {
+				var x float64 = float64(r) * math.Sin(math.Pi*2*float64(angle)/360)
+				var y float64 = float64(r) * math.Cos(math.Pi*2*float64(angle)/360)
+				var xx int = int(agar.X + math.Round(float64(x*100))/100)
+				var yy int = int(agar.Y + math.Round(float64(y*100))/100)
+				sx := fmt.Sprintf("%v", xx)
+				sy := fmt.Sprintf("%v", yy)
+				existRes := beads.Exist(room, sx+"_"+sy)
+				if existRes {
+					eatKey = Eat{
+						eat: true,
+						key: sx + "_" + sy,
+					}
+					beads.DeleteWithKey(room, sx+"_"+sy)
+				}
+			}
+		}
+		wg.Done()
+		c1 <- eatKey
+	}
+
+	wg.Add(1)
+	go checkBeadIsExist(RoomId)
+	wg.Wait()
+
+	r := Re{
+		Eat:     false,
+		Eat_key: "_",
+	}
+
+	select {
+	case eatKey := <-c1:
+		if eatKey.eat {
+			r = Re{
 				Eat:     true,
-				Eat_key: x + "_" + y,
+				Eat_key: eatKey.key,
 			}
 		}
 	}
+
+	return r
+}
+
+func (agar *AgarPosition) GetAgarSpace2(beads *beads.Beads, RoomId string) Re {
+	// var dir []map[string]int = make([]map[string]int, 0)
+	// for angle := 1; angle <= 360; angle++ {
+	// 	for r := agar.Radius; r >= (agar.Radius - 10); r-- {
+	// 		var x float64 = float64(r) * math.Sin(math.Pi*2*float64(angle)/360)
+	// 		var y float64 = float64(r) * math.Cos(math.Pi*2*float64(angle)/360)
+	// 		var xx int = int(agar.X + math.Round(float64(x*100))/100)
+	// 		var yy int = int(agar.Y + math.Round(float64(y*100))/100)
+
+	// 		myMap := make(map[string]int, 0)
+	// 		myMap["x"] = xx
+	// 		myMap["y"] = yy
+	// 		dir = append(dir, myMap)
+	// 	}
+	// }
+
+	// for _, v := range dir {
+	// 	var x string = fmt.Sprintf("%v", v["x"])
+	// 	var y string = fmt.Sprintf("%v", v["y"])
+
+	// 	if (*beads)[RoomId][x+"_"+y] == 10 {
+	// 		delete((*beads)[RoomId], x+"_"+y)
+	// 		return Re{
+	// 			Eat:     true,
+	// 			Eat_key: x + "_" + y,
+	// 		}
+	// 	}
+	// }
 
 	return Re{
 		Eat:     false,
