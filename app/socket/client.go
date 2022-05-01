@@ -8,7 +8,6 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/alirezakargar1380/agar.io-golang/app/agar"
 	"github.com/alirezakargar1380/agar.io-golang/app/beads"
 	"github.com/alirezakargar1380/agar.io-golang/app/trigonometric_circle"
 	"github.com/gorilla/websocket"
@@ -54,8 +53,6 @@ type Data struct {
 	Command string
 	Data    interface{}
 }
-
-// var beads map[string]map[string]int = make(map[string]map[string]int)
 
 func (c *Client) ReadPump() {
 	quit := make(chan struct{})
@@ -122,13 +119,6 @@ func (c *Client) ReadPump() {
 		json.Unmarshal([]byte(message), &res)
 		c.sendResponse(beads, res.Command, res.Data)
 	}
-	// for range time.Tick(time.Second * 5) {
-	// fmt.Println("Foo", c.RoomID)
-	// c.Hub.Broadcast <- &Message{
-	// 	roomID: c.RoomID,
-	// 	Data:   []byte(`{"Command": "/new_bead", "x": "300", "y": "300"}`),
-	// }
-	// }
 }
 
 func (c *Client) WritePump() {
@@ -169,31 +159,25 @@ type Agar struct {
 	Y float64
 }
 
+type AgarDe struct {
+	X         float64
+	Y         float64
+	Name      string
+	max_speed float64
+	speed     float64
+}
+
 type AgarDetail struct {
+	Agars     []AgarDe
 	X         float64
 	Y         float64
 	Size      float32
 	Speed     float32
 	Radius    float32
-	Max_Speed float64
+	Max_Speed float32
 }
 
 func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data interface{}) {
-	// this is a test for sending message to client
-	// c.Hub.Broadcast <- &Message{
-	// 	roomID: c.RoomID,
-	// 	Data:   []byte(`{"Command": "/new_agar", "data": ""}`),
-	// }
-	// for {
-	// 	fmt.Println("sending...")
-	// 	c.Hub.Broadcast <- &Message{
-	// 		roomID: c.RoomID,
-	// 		Data:   []byte(`{"Command": "/new_agar", "data": ""}`),
-	// 	}
-	// }
-	// fmt.Println(command)
-	// return
-
 	switch command {
 	case "/hello":
 		fmt.Println("hello")
@@ -240,67 +224,60 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 			Data:   resp,
 		}
 	case "/move":
-		d := data.(map[string]interface{})
-
-		if d["opration"].(string) == "increse" {
-			percent_of_speed := math.Round(float64(d["percent_of_speed"].(float64)))
-			var dd float32 = float32(percent_of_speed*100) * float32(Agars[c.Client_id].Max_Speed) / 100
-			// fmt.Println(Agars[c.Client_id].Max_Speed)
-			if dd/100 == float32(Agars[c.Client_id].Max_Speed) {
-				if Agars[c.Client_id].Speed < dd/100 {
-					Agars[c.Client_id].Speed += 0.1
-				}
-			} else {
-				if Agars[c.Client_id].Speed > dd/100 {
-					Agars[c.Client_id].Speed -= 0.1
-				}
-			}
-		} else {
-			if Agars[c.Client_id].Speed >= 0.10 {
-				Agars[c.Client_id].Speed -= 0.06
-			}
-		}
-		tri := &trigonometric_circle.AgarDetail{
-			X:      Agars[c.Client_id].X,
-			Y:      Agars[c.Client_id].Y,
-			Radius: float64(Agars[c.Client_id].Speed),
-		}
-		directions := tri.Test(d["angle"].(float64))
-
-		// Making response
 		var res map[string]string = make(map[string]string)
-		// Check is eat or not
-		// Agars[c.Client_id].Radius = 200
-		dir := &agar.AgarPosition{
-			X:      directions["x"],
-			Y:      directions["y"],
-			Radius: int(Agars[c.Client_id].Radius),
+		d := data.(map[string]interface{})
+		for i := 0; i < len(Agars[c.Client_id].Agars); i++ {
+			agar := Agars[c.Client_id].Agars[i]
+			if d["opration"].(string) == "increse" {
+				// fmt.Println("increase")
+				percent_of_speed := math.Round(float64(d["percent_of_speed"].(float64)))
+				var dd float64 = float64(percent_of_speed*100) * float64(agar.max_speed) / 100
+				dd = dd / 100
+				dd = math.Floor(dd*100) / 100
+				if dd == float64(agar.max_speed) {
+					// fmt.Println("equal")
+					if agar.max_speed > agar.speed {
+						// fmt.Println("--->> equal")
+						Agars[c.Client_id].Agars[i].speed += 0.1
+					}
+				} else {
+					fmt.Println("not equal", agar.speed)
+					if Agars[c.Client_id].Agars[i].speed > 0 {
+						if Agars[c.Client_id].Agars[i].speed > dd {
+							Agars[c.Client_id].Agars[i].speed -= 0.1
+						}
+					}
+				}
+				// fmt.Println("---------------------------------")
+			} else {
+				// fmt.Println("decrease")
+				if Agars[c.Client_id].Agars[i].speed >= 0.10 {
+					Agars[c.Client_id].Agars[i].speed -= 0.06
+				} else {
+					Agars[c.Client_id].Agars[i].speed = 0
+				}
+			}
+
+			// fmt.Println(agar.speed)
+
+			tri := &trigonometric_circle.AgarDetail{
+				X:      agar.X,
+				Y:      agar.Y,
+				Radius: float64(agar.speed),
+			}
+			directions := tri.Test(d["angle"].(float64))
+
+			Agars[c.Client_id].Agars[i].X = directions["x"]
+			Agars[c.Client_id].Agars[i].Y = directions["y"]
 		}
-		eat := dir.GetAgarSpace4(beads, c.RoomID)
-		if eat.Eat {
-			Agars[c.Client_id].Radius += 2
-			res["eat_key"] = eat.Eat_key
-			// Agars[c.Client_id].Max_Speed -= 0.1
-			res["size"] = fmt.Sprintf("%v", Agars[c.Client_id].Radius)
-			delete(beads.Beads[c.RoomID], eat.Eat_key)
+
+		res["Command"] = "/move_agars"
+		dd, err := json.Marshal(Agars[c.Client_id].Agars)
+		if err != nil {
+			fmt.Println(err)
+			return
 		}
-
-		// eat := dir.GetAgarSpace3(beads, c.RoomID)
-		// if eat.Eat {
-		// 	res["eat_key"] = eat.Eat_key
-		// 	Agars[c.Client_id].Radius += 2
-		// 	Agars[c.Client_id].Max_Speed -= 0.1
-		// 	res["size"] = fmt.Sprintf("%v", Agars[c.Client_id].Radius)
-		// }
-
-		Agars[c.Client_id].X = directions["x"]
-		Agars[c.Client_id].Y = directions["y"]
-
-		res["Command"] = "/m_agar"
-		res["x"] = fmt.Sprintf("%v", directions["x"])
-		res["y"] = fmt.Sprintf("%v", directions["y"])
-		res["speed"] = fmt.Sprintf("%v", Agars[c.Client_id].Speed)
-
+		res["agars"] = string(dd)
 		js, err := json.Marshal(res)
 		if err != nil {
 			fmt.Println(err)
@@ -310,6 +287,103 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 		c.Hub.Broadcast <- &Message{
 			roomID: c.RoomID,
 			Data:   js,
+		}
+
+		// 	if d["opration"].(string) == "increse" {
+		// 		percent_of_speed := math.Round(float64(d["percent_of_speed"].(float64)))
+		// 		var dd float32 = float32(percent_of_speed*100) * float32(Agars[c.Client_id].Max_Speed) / 100
+		// 		if dd/100 == float32(Agars[c.Client_id].Max_Speed) {
+		// 			if Agars[c.Client_id].Speed < dd/100 {
+		// 				Agars[c.Client_id].Speed += 0.1
+		// 			}
+		// 		} else {
+		// 			if Agars[c.Client_id].Speed > dd/100 {
+		// 				Agars[c.Client_id].Speed -= 0.1
+		// 			}
+		// 		}
+		// 	} else {
+		// 		if Agars[c.Client_id].Speed >= 0.10 {
+		// 			Agars[c.Client_id].Speed -= 0.06
+		// 		}
+		// 	}
+		// 	tri := &trigonometric_circle.AgarDetail{
+		// 		X:      Agars[c.Client_id].X,
+		// 		Y:      Agars[c.Client_id].Y,
+		// 		Radius: float64(Agars[c.Client_id].Speed),
+		// 	}
+		// 	directions := tri.Test(d["angle"].(float64))
+
+		// 	// Making response
+		// 	// var res map[string]string = make(map[string]string)
+		// 	// Check is eat or not
+		// 	// Agars[c.Client_id].Radius = 200
+		// 	dir := &agar.AgarPosition{
+		// 		X:      directions["x"],
+		// 		Y:      directions["y"],
+		// 		Radius: int(Agars[c.Client_id].Radius),
+		// 	}
+		// 	eat := dir.GetAgarSpace4(beads, c.RoomID)
+		// 	if eat.Eat {
+		// 		Agars[c.Client_id].Radius += 2
+		// 		res["eat_key"] = eat.Eat_key
+		// 		// Agars[c.Client_id].Max_Speed -= 0.1
+		// 		res["size"] = fmt.Sprintf("%v", Agars[c.Client_id].Radius)
+		// 		delete(beads.Beads[c.RoomID], eat.Eat_key)
+		// 	}
+
+		// 	// eat := dir.GetAgarSpace3(beads, c.RoomID)
+		// 	// if eat.Eat {
+		// 	// 	res["eat_key"] = eat.Eat_key
+		// 	// 	Agars[c.Client_id].Radius += 2
+		// 	// 	Agars[c.Client_id].Max_Speed -= 0.1
+		// 	// 	res["size"] = fmt.Sprintf("%v", Agars[c.Client_id].Radius)
+		// 	// }
+
+		// 	Agars[c.Client_id].X = directions["x"]
+		// 	Agars[c.Client_id].Y = directions["y"]
+
+		// 	res["Command"] = "/m_agar"
+		// 	res["x"] = fmt.Sprintf("%v", directions["x"])
+		// 	res["y"] = fmt.Sprintf("%v", directions["y"])
+		// 	res["speed"] = fmt.Sprintf("%v", Agars[c.Client_id].Speed)
+
+		// 	// js, err := json.Marshal(res)
+		// 	if err != nil {
+		// 		fmt.Println(err)
+		// 		return
+		// 	}
+
+		// 	c.Hub.Broadcast <- &Message{
+		// 		roomID: c.RoomID,
+		// 		Data:   js,
+		// 	}
+	case "/game":
+		agarD := make(map[string]float64)
+		agarD["x"] = 200
+		agarD["y"] = 200
+		// agarD["name"] = "main"
+		Agars[c.Client_id].Agars = append(Agars[c.Client_id].Agars, AgarDe{
+			X:         200,
+			Y:         200,
+			Name:      "agar",
+			max_speed: 5.44,
+			speed:     0,
+		}, AgarDe{
+			X:         300,
+			Y:         300,
+			Name:      "nu2",
+			max_speed: 5,
+			speed:     0,
+		})
+
+		var new_agar_response map[string]string = make(map[string]string)
+		new_agar_response["Command"] = "/new_agar"
+		new_agar_response["x"] = fmt.Sprintf("%v", 200)
+		new_agar_response["y"] = fmt.Sprintf("%v", 200)
+		reeee, _ := json.Marshal(new_agar_response)
+		c.Hub.Broadcast <- &Message{
+			roomID: c.RoomID,
+			Data:   []byte(reeee),
 		}
 	default:
 		fmt.Println("def")
