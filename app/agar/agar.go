@@ -67,6 +67,7 @@ func (agar *AgarPosition) GetAgarSpace4(beads *beads.Beads, RoomId string) Re {
 		if agar.getDistance(float64(beadX), float64(beadY)) < float64(agar.Radius) {
 			eat = true
 			eatKey = key
+			delete(beads.Beads[RoomId], eatKey)
 		}
 	}
 

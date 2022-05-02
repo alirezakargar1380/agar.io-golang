@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/alirezakargar1380/agar.io-golang/app/agar"
 	"github.com/alirezakargar1380/agar.io-golang/app/beads"
 	"github.com/alirezakargar1380/agar.io-golang/app/trigonometric_circle"
 	"github.com/gorilla/websocket"
@@ -180,8 +181,8 @@ type AgarDetail struct {
 }
 
 func GetMaxSpeedWithRadius(Radius float64) float64 {
-	speed := 7 - (Radius * 0.026)
-	return speed
+	speed := 7 - (Radius * 0.013)
+	return math.Floor(speed*1000) / 1000
 }
 
 func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data interface{}) {
@@ -231,21 +232,22 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 			Data:   resp,
 		}
 	case "/move":
+		// fmt.Println("moving...")
 		var res map[string]string = make(map[string]string)
 		d := data.(map[string]interface{})
 		for i := 0; i < len(Agars[c.Client_id].Agars); i++ {
-			agar := Agars[c.Client_id].Agars[i]
+			agarObject := Agars[c.Client_id].Agars[i]
 			if d["opration"].(string) == "increse" {
 				percent_of_speed := math.Round(float64(d["percent_of_speed"].(float64)))
-				var dd float64 = float64(percent_of_speed*100) * float64(agar.max_speed) / 100
+				maxSpeed := GetMaxSpeedWithRadius(agarObject.Radius)
+				var dd float64 = float64(percent_of_speed*100) * float64(maxSpeed) / 100
 				dd = dd / 100
 				dd = math.Floor(dd*100) / 100
-				if dd == float64(agar.max_speed) {
-					if agar.max_speed > agar.Speed {
+				if dd == maxSpeed || (dd+0.01) == maxSpeed {
+					if agarObject.max_speed > agarObject.Speed {
 						Agars[c.Client_id].Agars[i].Speed += 0.1
 					}
 				} else {
-					fmt.Println("not equal", agar.Speed)
 					if Agars[c.Client_id].Agars[i].Speed > 0 {
 						if Agars[c.Client_id].Agars[i].Speed > dd {
 							Agars[c.Client_id].Agars[i].Speed -= 0.1
@@ -261,14 +263,33 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 			}
 
 			tri := &trigonometric_circle.AgarDetail{
-				X:      agar.X,
-				Y:      agar.Y,
-				Radius: float64(agar.Speed),
+				X:      agarObject.X,
+				Y:      agarObject.Y,
+				Speed:  float64(agarObject.Speed),
+				Radius: float64(agarObject.Radius),
 			}
 			directions := tri.Test(d["angle"].(float64))
+			// fmt.Println(directions["x"], directions["y"])
 
 			Agars[c.Client_id].Agars[i].X = directions["x"]
 			Agars[c.Client_id].Agars[i].Y = directions["y"]
+
+			dir := &agar.AgarPosition{
+				X:      directions["x"],
+				Y:      directions["y"],
+				Radius: int(Agars[c.Client_id].Agars[i].Radius),
+			}
+
+			eat := dir.GetAgarSpace4(beads, c.RoomID)
+
+			if eat.Eat {
+
+				res["eat_key"] = eat.Eat_key
+				if Agars[c.Client_id].Agars[i].Radius < 450 {
+					Agars[c.Client_id].Agars[i].Radius += 5
+				}
+			}
+
 		}
 
 		res["Command"] = "/move_agars"
@@ -368,7 +389,7 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 		}
 		newId = lastId + 1
 		if newId == 1 {
-			newRadius = 60
+			newRadius = 450
 		} else {
 			newRadius = 20
 			Agars[c.Client_id].Agars[0].Radius = Agars[c.Client_id].Agars[0].Radius - 20
@@ -377,8 +398,8 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 
 		Agars[c.Client_id].Agars = append(Agars[c.Client_id].Agars, AgarDe{
 			Id:        newId,
-			X:         200,
-			Y:         200,
+			X:         1000,
+			Y:         1000,
 			Radius:    newRadius,
 			max_speed: GetMaxSpeedWithRadius(newRadius),
 			Speed:     0,

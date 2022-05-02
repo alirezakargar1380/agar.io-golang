@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"strconv"
 
@@ -67,9 +68,11 @@ func setupRoutes() {
 func main() {
 	fmt.Println("hello im backEnd agario")
 
-	var Radius float64 = 60
-	speed := 7 - (Radius * 0.026)
-	fmt.Println(speed)
+	// for i := 400; i > 0; i-- {
+	var Radius float64 = float64(450)
+	speed := 7 - (Radius * 0.013)
+	fmt.Println(math.Floor(speed*1000) / 1000)
+	// }
 
 	setupRoutes()
 	log.Fatal(http.ListenAndServe(":8080", nil))
