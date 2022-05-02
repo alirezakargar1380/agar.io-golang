@@ -164,6 +164,7 @@ type AgarDe struct {
 	X         float64
 	Y         float64
 	Name      string
+	Radius    float64
 	max_speed float64
 	Speed     float64
 }
@@ -176,6 +177,11 @@ type AgarDetail struct {
 	Speed     float32
 	Radius    float32
 	Max_Speed float32
+}
+
+func GetMaxSpeedWithRadius(Radius float64) float64 {
+	speed := 7 - (Radius * 0.026)
+	return speed
 }
 
 func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data interface{}) {
@@ -355,21 +361,26 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 		fmt.Println("adding new agar")
 		var lastId int = 0
 		var newId int = 0
-		// var Radius int = 0
+		var newRadius float64 = 0
 		for i := 0; i < len(Agars[c.Client_id].Agars); i++ {
 			agar := Agars[c.Client_id].Agars[i]
 			lastId = agar.Id
 		}
 		newId = lastId + 1
-		// if newId == 1 {
-		// 	Radius = 60
-		// }
+		if newId == 1 {
+			newRadius = 60
+		} else {
+			newRadius = 20
+			Agars[c.Client_id].Agars[0].Radius = Agars[c.Client_id].Agars[0].Radius - 20
+			Agars[c.Client_id].Agars[0].max_speed = GetMaxSpeedWithRadius(Agars[c.Client_id].Agars[0].Radius)
+		}
 
 		Agars[c.Client_id].Agars = append(Agars[c.Client_id].Agars, AgarDe{
 			Id:        newId,
 			X:         200,
 			Y:         200,
-			max_speed: 5.44,
+			Radius:    newRadius,
+			max_speed: GetMaxSpeedWithRadius(newRadius),
 			Speed:     0,
 		})
 
@@ -377,7 +388,7 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 		new_agar_response["Command"] = "/new_agar"
 		new_agar_response["x"] = fmt.Sprintf("%v", 200)
 		new_agar_response["y"] = fmt.Sprintf("%v", 200)
-		new_agar_response["radius"] = fmt.Sprintf("%v", 60)
+		new_agar_response["radius"] = fmt.Sprintf("%v", newRadius)
 		new_agar_response["id"] = fmt.Sprintf("%v", newId)
 
 		reeee, _ := json.Marshal(new_agar_response)
