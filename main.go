@@ -17,7 +17,6 @@ var upgrader = websocket.Upgrader{
 }
 
 func wsEndpoint(hub *socket.Hub, w http.ResponseWriter, r *http.Request) {
-
 	params := r.URL.Query()
 	roomId := params.Get("d")
 	var clientId string = params.Get("client_id")
@@ -28,12 +27,12 @@ func wsEndpoint(hub *socket.Hub, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// set default agar size
-	socket.Agars[Id] = &socket.AgarDetail{
-		X:         200,
-		Y:         200,
-		Radius:    60,
-		Speed:     0,
-		Max_Speed: 5.44,
+	if socket.Agars[roomId] == nil {
+		socket.Agars[roomId] = make(map[int64]*socket.AgarDetail)
+	}
+
+	socket.Agars[roomId][Id] = &socket.AgarDetail{
+		Client_id: int(Id),
 	}
 
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
