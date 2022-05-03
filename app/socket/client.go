@@ -55,6 +55,10 @@ type Data struct {
 	Data    interface{}
 }
 
+var Gamebeads *beads.Beads = &beads.Beads{
+	Beads: make(map[string]map[string]int),
+}
+
 func (c *Client) ReadPump() {
 	quit := make(chan struct{})
 	defer func() {
@@ -68,17 +72,15 @@ func (c *Client) ReadPump() {
 	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.Conn.SetPongHandler(func(string) error { c.Conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	ticker := time.NewTicker(1 * time.Second)
-	beads := &beads.Beads{
-		Beads: make(map[string]map[string]int),
-	}
-	if beads.Beads[c.RoomID] == nil {
-		beads.Beads[c.RoomID] = make(map[string]int)
+	if Gamebeads.Beads[c.RoomID] == nil {
+		fmt.Println("Beads is nil")
+		Gamebeads.Beads[c.RoomID] = make(map[string]int)
 	}
 	go func() {
 		for {
 			select {
 			case <-ticker.C:
-				if len(beads.Beads[c.RoomID]) == 200 {
+				if len(Gamebeads.Beads[c.RoomID]) == 200 {
 					fmt.Println("---> beads are full")
 				} else {
 					// 	rand.Seed(time.Now().UnixNano())
@@ -91,7 +93,7 @@ func (c *Client) ReadPump() {
 					p["x"] = fmt.Sprintf("%v", x)
 					p["y"] = fmt.Sprintf("%v", y)
 					key := p["x"] + "_" + p["y"]
-					beads.Set(c.RoomID, key)
+					Gamebeads.Set(c.RoomID, key)
 					json, _ := json.Marshal(p)
 					c.Hub.Broadcast <- &Message{
 						roomID: c.RoomID,
@@ -118,7 +120,7 @@ func (c *Client) ReadPump() {
 
 		var res Data
 		json.Unmarshal([]byte(message), &res)
-		c.sendResponse(beads, res.Command, res.Data)
+		c.sendResponse(Gamebeads, res.Command, res.Data)
 	}
 }
 
@@ -229,11 +231,15 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 			eat := dir.GetAgarSpace4(beads, c.RoomID)
 
 			if eat.Eat {
-
-				res["eat_key"] = eat.Eat_key
-				if Agars[c.RoomID][c.Client_id].Agars[i].Radius < 450 {
-					Agars[c.RoomID][c.Client_id].Agars[i].Radius += 5
+				eatKeys, err := json.Marshal(eat.Eat_key)
+				if err != nil {
+					return
 				}
+				res["eat_key"] = string(eatKeys)
+				if Agars[c.RoomID][c.Client_id].Agars[i].Radius < 450 {
+					Agars[c.RoomID][c.Client_id].Agars[i].Radius += 1
+				}
+				// delete(Gamebeads.Beads[c.RoomID], eat.Eat_key)
 			}
 
 		}
@@ -298,13 +304,19 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 	case "/game_detail":
 		var res map[string]string = make(map[string]string)
 		res["Command"] = "/game_details"
-		fmt.Println(Agars[c.RoomID])
 		dd, err := json.Marshal(Agars[c.RoomID])
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
+		beadss, err := json.Marshal(Gamebeads.Beads[c.RoomID])
+		fmt.Println(Gamebeads.Beads[c.RoomID])
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 		res["agars"] = string(dd)
+		res["beads"] = string(beadss)
 		js, err := json.Marshal(res)
 		if err != nil {
 			fmt.Println(err)

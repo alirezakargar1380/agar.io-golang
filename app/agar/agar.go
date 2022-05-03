@@ -5,7 +5,6 @@ import (
 	"math"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/alirezakargar1380/agar.io-golang/app/beads"
 )
@@ -37,7 +36,7 @@ func (agar *AgarPosition) GetAgarSpace() []map[string]float64 {
 
 type Re struct {
 	Eat     bool
-	Eat_key string
+	Eat_key []string
 }
 
 type Eat struct {
@@ -53,7 +52,7 @@ func (agar *AgarPosition) getDistance(to_x float64, to_y float64) float64 {
 
 func (agar *AgarPosition) GetAgarSpace4(beads *beads.Beads, RoomId string) Re {
 	var eat bool = false
-	var eatKey string = ""
+	var eatKey []string = make([]string, 0)
 	for key := range beads.Beads[RoomId] {
 		positions := strings.Split(key, "_")
 		beadX, error := strconv.Atoi(positions[0])
@@ -66,8 +65,9 @@ func (agar *AgarPosition) GetAgarSpace4(beads *beads.Beads, RoomId string) Re {
 		}
 		if agar.getDistance(float64(beadX), float64(beadY)) < float64(agar.Radius) {
 			eat = true
-			eatKey = key
-			delete(beads.Beads[RoomId], eatKey)
+			// eatKey = key
+			eatKey = append(eatKey, key)
+			delete(beads.Beads[RoomId], key)
 		}
 	}
 
@@ -77,60 +77,60 @@ func (agar *AgarPosition) GetAgarSpace4(beads *beads.Beads, RoomId string) Re {
 	}
 }
 
-func (agar *AgarPosition) GetAgarSpace3(beads *beads.Beads, RoomId string) Re {
-	var wg sync.WaitGroup
-	c1 := make(chan Eat)
-	checkBeadIsExist := func(room string) {
-		radius14 := math.Round(float64(agar.Radius / 3))
-		var eatKey Eat = Eat{
-			eat: false,
-			key: "",
-		}
-		for angle := 1; angle <= 360; angle++ {
-			for r := agar.Radius; r >= (agar.Radius - int(radius14)); r-- {
-				var x float64 = float64(r) * math.Sin(math.Pi*2*float64(angle)/360)
-				var y float64 = float64(r) * math.Cos(math.Pi*2*float64(angle)/360)
-				var xx int = int(agar.X + math.Round(float64(x*100))/100)
-				var yy int = int(agar.Y + math.Round(float64(y*100))/100)
-				sx := fmt.Sprintf("%v", xx)
-				sy := fmt.Sprintf("%v", yy)
-				existRes := beads.Exist(room, sx+"_"+sy)
-				if existRes {
-					eatKey = Eat{
-						eat: true,
-						key: sx + "_" + sy,
-					}
-					beads.DeleteWithKey(room, sx+"_"+sy)
-				}
-			}
-		}
-		wg.Done()
-		c1 <- eatKey
-	}
+// func (agar *AgarPosition) GetAgarSpace3(beads *beads.Beads, RoomId string) Re {
+// 	var wg sync.WaitGroup
+// 	c1 := make(chan Eat)
+// 	checkBeadIsExist := func(room string) {
+// 		radius14 := math.Round(float64(agar.Radius / 3))
+// 		var eatKey Eat = Eat{
+// 			eat: false,
+// 			key: "",
+// 		}
+// 		for angle := 1; angle <= 360; angle++ {
+// 			for r := agar.Radius; r >= (agar.Radius - int(radius14)); r-- {
+// 				var x float64 = float64(r) * math.Sin(math.Pi*2*float64(angle)/360)
+// 				var y float64 = float64(r) * math.Cos(math.Pi*2*float64(angle)/360)
+// 				var xx int = int(agar.X + math.Round(float64(x*100))/100)
+// 				var yy int = int(agar.Y + math.Round(float64(y*100))/100)
+// 				sx := fmt.Sprintf("%v", xx)
+// 				sy := fmt.Sprintf("%v", yy)
+// 				existRes := beads.Exist(room, sx+"_"+sy)
+// 				if existRes {
+// 					eatKey = Eat{
+// 						eat: true,
+// 						key: sx + "_" + sy,
+// 					}
+// 					beads.DeleteWithKey(room, sx+"_"+sy)
+// 				}
+// 			}
+// 		}
+// 		wg.Done()
+// 		c1 <- eatKey
+// 	}
 
-	wg.Add(1)
-	go checkBeadIsExist(RoomId)
-	wg.Wait()
+// 	wg.Add(1)
+// 	go checkBeadIsExist(RoomId)
+// 	wg.Wait()
 
-	r := Re{
-		Eat:     false,
-		Eat_key: "_",
-	}
+// 	r := Re{
+// 		Eat:     false,
+// 		Eat_key: "_",
+// 	}
 
-	select {
-	case eatKey := <-c1:
-		if eatKey.eat {
-			r = Re{
-				Eat:     true,
-				Eat_key: eatKey.key,
-			}
-		}
-	}
+// 	select {
+// 	case eatKey := <-c1:
+// 		if eatKey.eat {
+// 			r = Re{
+// 				Eat:     true,
+// 				Eat_key: eatKey.key,
+// 			}
+// 		}
+// 	}
 
-	return r
-}
+// 	return r
+// }
 
-func (agar *AgarPosition) GetAgarSpace2(beads *beads.Beads, RoomId string) Re {
+func (agar *AgarPosition) GetAgarSpace2(beads *beads.Beads, RoomId string) {
 	// var dir []map[string]int = make([]map[string]int, 0)
 	// for angle := 1; angle <= 360; angle++ {
 	// 	for r := agar.Radius; r >= (agar.Radius - 10); r-- {
@@ -159,10 +159,10 @@ func (agar *AgarPosition) GetAgarSpace2(beads *beads.Beads, RoomId string) Re {
 	// 	}
 	// }
 
-	return Re{
-		Eat:     false,
-		Eat_key: "",
-	}
+	// return Re{
+	// 	Eat:     false,
+	// 	Eat_key: "",
+	// }
 }
 
 func CheckAgarSpace(dir []map[string]float64, beads *map[string]int) bool {
