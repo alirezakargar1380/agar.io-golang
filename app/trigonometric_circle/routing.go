@@ -13,6 +13,7 @@ type AgarDetail struct {
 }
 
 type AgarDe struct {
+	Lock      bool
 	Id        int
 	X         float64
 	Y         float64

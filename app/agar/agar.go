@@ -7,12 +7,61 @@ import (
 	"strings"
 
 	"github.com/alirezakargar1380/agar.io-golang/app/beads"
+	"github.com/alirezakargar1380/agar.io-golang/app/trigonometric_circle"
 )
 
 type AgarPosition struct {
 	X      float64
 	Y      float64
 	Radius int
+}
+
+type AllAgars struct {
+	Agars  []trigonometric_circle.AgarDe
+	Id     int
+	X      float64
+	Y      float64
+	Radius int
+}
+
+type CheckForEatingResponse struct {
+	Status           bool
+	Eated_agar_id    int
+	Eated_agar_by_id int
+}
+
+func (agars *AllAgars) CheckForEating() CheckForEatingResponse {
+	var response CheckForEatingResponse = CheckForEatingResponse{
+		Status: false,
+	}
+	for _, v := range agars.Agars {
+		if v.Id == agars.Id {
+			continue
+		}
+		distance := trigonometric_circle.GetDistanceBetweenTowPoint(v.X, v.Y, agars.X, agars.Y)
+		// fmt.Println(v.Id, agars.Id)
+		if distance < float64(agars.Radius) {
+			response.Status = true
+			if v.Id == 1 {
+				response.Eated_agar_id = agars.Id
+			}
+			if agars.Id == 1 {
+				response.Eated_agar_id = v.Id
+			}
+
+			if response.Eated_agar_id == agars.Id {
+				response.Eated_agar_by_id = v.Id
+			} else {
+				response.Eated_agar_by_id = agars.Id
+			}
+			// if float64(agars.Radius) > v.Radius {
+			// 	fmt.Println(agars.Id)
+			// } else {
+			// 	fmt.Println(v.Id)
+			// }
+		}
+	}
+	return response
 }
 
 func (agar *AgarPosition) GetAgarSpace() []map[string]float64 {

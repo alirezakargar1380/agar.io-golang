@@ -11,6 +11,7 @@ import (
 	"github.com/alirezakargar1380/agar.io-golang/app/agar"
 	"github.com/alirezakargar1380/agar.io-golang/app/beads"
 	"github.com/alirezakargar1380/agar.io-golang/app/trigonometric_circle"
+	agar_arrays "github.com/alirezakargar1380/agar.io-golang/app/utils"
 	"github.com/gorilla/websocket"
 )
 
@@ -179,6 +180,9 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 		d := data.(map[string]interface{})
 		for i := 0; i < len(Agars[c.RoomID][c.Client_id].Agars); i++ {
 			agarObject := Agars[c.RoomID][c.Client_id].Agars[i]
+			if agarObject.Lock {
+				continue
+			}
 			// if d["opration"].(string) == "increse" {
 			percent_of_speed := math.Round(float64(d["percent_of_speed"].(float64)))
 			maxSpeed := GetMaxSpeedWithRadius(Agars[c.RoomID][c.Client_id].Agars[i].Radius)
@@ -237,11 +241,28 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 				}
 				res["eat_key"] = string(eatKeys)
 				if Agars[c.RoomID][c.Client_id].Agars[i].Radius < 450 {
-					Agars[c.RoomID][c.Client_id].Agars[i].Radius += 1
+					Agars[c.RoomID][c.Client_id].Agars[i].Radius += 2
 				}
-				// delete(Gamebeads.Beads[c.RoomID], eat.Eat_key)
 			}
 
+			// check for user agars if they eat together
+			checkAgars := agar.AllAgars{
+				Agars:  Agars[c.RoomID][c.Client_id].Agars,
+				Id:     Agars[c.RoomID][c.Client_id].Agars[i].Id,
+				X:      Agars[c.RoomID][c.Client_id].Agars[i].X,
+				Y:      Agars[c.RoomID][c.Client_id].Agars[i].Y,
+				Radius: int(Agars[c.RoomID][c.Client_id].Agars[i].Radius),
+			}
+			eatTogetherResult := checkAgars.CheckForEating()
+			if eatTogetherResult.Status {
+				agarsArrayHandler := &agar_arrays.Agars{
+					Agars: Agars[c.RoomID][c.Client_id].Agars,
+				}
+				Eated_agar_by_index := agarsArrayHandler.GETAgarIndexWithId(eatTogetherResult.Eated_agar_by_id)
+				Eated_agar_index := agarsArrayHandler.GETAgarIndexWithId(eatTogetherResult.Eated_agar_id)
+				Agars[c.RoomID][c.Client_id].Agars[Eated_agar_by_index].Radius += Agars[c.RoomID][c.Client_id].Agars[Eated_agar_index].Radius
+				Agars[c.RoomID][c.Client_id].Agars[Eated_agar_index].Radius = 0
+			}
 		}
 
 		res["Command"] = "/move_agars"
@@ -373,7 +394,7 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 						if eat.Eat {
 							for i := 0; i < len(eat.Eat_key); i++ {
 								eat_keys = append(eat_keys, eat.Eat_key[i])
-								Agars[c.RoomID][c.Client_id].Agars[lastAgarKey].Radius += 20
+								Agars[c.RoomID][c.Client_id].Agars[lastAgarKey].Radius += 2
 							}
 
 							// sending response

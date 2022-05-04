@@ -37,6 +37,7 @@ func wsEndpoint(hub *socket.Hub, w http.ResponseWriter, r *http.Request) {
 	}
 
 	socket.Agars[roomId][Id].Agars = append(socket.Agars[roomId][Id].Agars, trigonometric_circle.AgarDe{
+		Lock:      false,
 		Id:        1,
 		X:         100,
 		Y:         100,
@@ -44,7 +45,21 @@ func wsEndpoint(hub *socket.Hub, w http.ResponseWriter, r *http.Request) {
 		Name:      "",
 		Max_speed: 7,
 		Speed:     0,
+	}, trigonometric_circle.AgarDe{
+		Lock:      true,
+		Id:        2,
+		X:         300,
+		Y:         100,
+		Radius:    60,
+		Name:      "",
+		Max_speed: 7,
+		Speed:     0,
 	})
+
+	index := 1
+	socket.Agars[roomId][Id].Agars = append(socket.Agars[roomId][Id].Agars[:index], socket.Agars[roomId][Id].Agars[index+1:]...)
+	fmt.Println(socket.Agars[roomId][Id].Agars)
+	return
 
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 
