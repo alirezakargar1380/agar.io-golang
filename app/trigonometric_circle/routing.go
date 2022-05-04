@@ -38,6 +38,12 @@ func (agar *AgarDetail) Test(angle float64) map[string]float64 {
 	return response
 }
 
+func GetDistanceBetweenTowPoint(from_x float64, from_y float64, to_x float64, to_y float64) float64 {
+	var x float64 = to_y - from_y
+	var y float64 = to_x - from_x
+	return math.Sqrt(x*x + y*y)
+}
+
 func (agar *AgarDetail) GetDistance(to_x float64, to_y float64) float64 {
 	var x float64 = to_y - float64(agar.Y)
 	var y float64 = to_x - float64(agar.X)

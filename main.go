@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/alirezakargar1380/agar.io-golang/app/socket"
+	"github.com/alirezakargar1380/agar.io-golang/app/trigonometric_circle"
 	"github.com/gorilla/websocket"
 )
 
@@ -34,6 +35,16 @@ func wsEndpoint(hub *socket.Hub, w http.ResponseWriter, r *http.Request) {
 	socket.Agars[roomId][Id] = &socket.AgarDetail{
 		Client_id: int(Id),
 	}
+
+	socket.Agars[roomId][Id].Agars = append(socket.Agars[roomId][Id].Agars, trigonometric_circle.AgarDe{
+		Id:        1,
+		X:         100,
+		Y:         100,
+		Radius:    50,
+		Name:      "",
+		Max_speed: 7,
+		Speed:     0,
+	})
 
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 
