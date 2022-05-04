@@ -330,9 +330,30 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 				case <-ticker.C:
 					i++
 					if i > 5 {
+						// movement_res["Command"] = "/move_agars"
+						// dd, err := json.Marshal(Agars[c.RoomID])
+						// if err != nil {
+						// 	fmt.Println(err)
+						// 	return
+						// }
+
+						// movement_res["agars"] = string(dd)
+						// if err != nil {
+						// 	return
+						// }
+
+						// js, err := json.Marshal(movement_res)
+						// if err != nil {
+						// 	fmt.Println(err)
+						// 	return
+						// }
+
+						// c.Hub.Broadcast <- &Message{
+						// 	roomID: c.RoomID,
+						// 	Data:   js,
+						// }
 						quit <- struct{}{}
 					} else {
-						fmt.Println(i)
 						tri := &trigonometric_circle.AgarDetail{
 							Id:    lastAgar.Id,
 							X:     Agars[c.RoomID][c.Client_id].Agars[lastAgarKey].X,
@@ -351,33 +372,34 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 
 						if eat.Eat {
 							for i := 0; i < len(eat.Eat_key); i++ {
-								fmt.Println("eat", eat.Eat_key[i])
 								eat_keys = append(eat_keys, eat.Eat_key[i])
 								Agars[c.RoomID][c.Client_id].Agars[lastAgarKey].Radius += 20
+							}
 
-								// sending response
-								movement_res["Command"] = "/move_agars"
-								dd, err := json.Marshal(Agars[c.RoomID])
-								if err != nil {
-									fmt.Println(err)
-									return
-								}
-								movement_res["agars"] = string(dd)
-								eatKeys, err := json.Marshal(eat_keys)
-								if err != nil {
-									return
-								}
-								movement_res["eat_key"] = string(eatKeys)
-								js, err := json.Marshal(movement_res)
-								if err != nil {
-									fmt.Println(err)
-									return
-								}
+							// sending response
+							movement_res["Command"] = "/eated_agars_keys"
 
-								c.Hub.Broadcast <- &Message{
-									roomID: c.RoomID,
-									Data:   js,
-								}
+							dd, err := json.Marshal(Agars[c.RoomID])
+							if err != nil {
+								fmt.Println(err)
+								return
+							}
+							movement_res["agars"] = string(dd)
+
+							eatKeys, err := json.Marshal(eat_keys)
+							if err != nil {
+								return
+							}
+							movement_res["eat_key"] = string(eatKeys)
+							js, err := json.Marshal(movement_res)
+							if err != nil {
+								fmt.Println(err)
+								return
+							}
+
+							c.Hub.Broadcast <- &Message{
+								roomID: c.RoomID,
+								Data:   js,
 							}
 						}
 
