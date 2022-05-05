@@ -39,8 +39,7 @@ func (agars *AllAgars) CheckForEating() CheckForEatingResponse {
 			continue
 		}
 		distance := trigonometric_circle.GetDistanceBetweenTowPoint(v.X, v.Y, agars.X, agars.Y)
-		// fmt.Println(v.Id, agars.Id)
-		if distance < float64(agars.Radius) {
+		if distance < float64(agars.Radius)+v.Radius {
 			response.Status = true
 			if v.Id == 1 {
 				response.Eated_agar_id = agars.Id

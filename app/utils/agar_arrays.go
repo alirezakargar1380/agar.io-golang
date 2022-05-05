@@ -18,3 +18,7 @@ func (agars *Agars) GETAgarIndexWithId(Id int) int {
 
 	return index
 }
+
+func (agars *Agars) RemoveAgarFromArrayWithIndex(index int) []trigonometric_circle.AgarDe {
+	return append(agars.Agars[:index], agars.Agars[index+1:]...)
+}

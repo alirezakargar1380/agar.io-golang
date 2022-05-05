@@ -81,10 +81,10 @@ func (c *Client) ReadPump() {
 		for {
 			select {
 			case <-ticker.C:
-				if len(Gamebeads.Beads[c.RoomID]) == 200 {
-					fmt.Println("---> beads are full")
+				if len(Gamebeads.Beads[c.RoomID]) == 20 {
+					continue
+					// fmt.Println("---> beads are full")
 				} else {
-					// 	rand.Seed(time.Now().UnixNano())
 					min := 500
 					max := 1000
 					x := rand.Intn(max-min+1) + min
@@ -101,7 +101,6 @@ func (c *Client) ReadPump() {
 						Data:   []byte(json),
 					}
 				}
-				// fmt.Println(len(beads.Beads[c.RoomID]))
 			case <-quit:
 				fmt.Println("stoped", c.RoomID)
 				// delete(beads, c.RoomID)
@@ -176,6 +175,7 @@ func GetMaxSpeedWithRadius(Radius float64) float64 {
 func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data interface{}) {
 	switch command {
 	case "/move":
+		// fmt.Println("move...")
 		var res map[string]string = make(map[string]string)
 		d := data.(map[string]interface{})
 		for i := 0; i < len(Agars[c.RoomID][c.Client_id].Agars); i++ {
@@ -221,8 +221,6 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 				tri.CheckForEatTogether(Agars[c.RoomID][c.Client_id].Agars)
 			}
 
-			// fmt.Println(directions["x"], directions["y"])
-
 			Agars[c.RoomID][c.Client_id].Agars[i].X = directions["x"]
 			Agars[c.RoomID][c.Client_id].Agars[i].Y = directions["y"]
 
@@ -232,8 +230,8 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 				Radius: int(Agars[c.RoomID][c.Client_id].Agars[i].Radius),
 			}
 
+			// check agar eat bead
 			eat := dir.GetAgarSpace4(beads, c.RoomID)
-
 			if eat.Eat {
 				eatKeys, err := json.Marshal(eat.Eat_key)
 				if err != nil {
@@ -261,7 +259,15 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 				Eated_agar_by_index := agarsArrayHandler.GETAgarIndexWithId(eatTogetherResult.Eated_agar_by_id)
 				Eated_agar_index := agarsArrayHandler.GETAgarIndexWithId(eatTogetherResult.Eated_agar_id)
 				Agars[c.RoomID][c.Client_id].Agars[Eated_agar_by_index].Radius += Agars[c.RoomID][c.Client_id].Agars[Eated_agar_index].Radius
-				Agars[c.RoomID][c.Client_id].Agars[Eated_agar_index].Radius = 0
+				fmt.Println("REmove an agar")
+				Agars[c.RoomID][c.Client_id].Agars = agarsArrayHandler.RemoveAgarFromArrayWithIndex(Eated_agar_index)
+			}
+
+			// check for other user agars if they eat together
+			for _, v := range Agars[c.RoomID] {
+				if int64(v.Client_id) != c.Client_id {
+					fmt.Println(v.Client_id)
+				}
 			}
 		}
 
@@ -282,7 +288,6 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 			roomID: c.RoomID,
 			Data:   js,
 		}
-
 	case "/halfagar":
 		d := data.(map[string]interface{})
 		var lastId int = 0
@@ -320,6 +325,8 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 		}
 		directions := tri.Test(d["angle"].(float64))
 
+		fmt.Println(lastAgarKey, len(Agars[c.RoomID][c.Client_id].Agars))
+
 		var new_agar_response map[string]string = make(map[string]string)
 		new_agar_response["Command"] = "/new_agar"
 		new_agar_response["x"] = fmt.Sprintf("%v", directions["x"])
@@ -332,14 +339,6 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 			roomID: c.RoomID,
 			Data:   []byte(reeee),
 		}
-
-		// process
-		// d := trigonometric_circle.GetDistanceBetweenTowPoint(100, 100, 300, 300)
-
-		// if Agars[c.RoomID][c.Client_id].Agars[lastAgarKey].Speed > 0.1 {
-		// 	fmt.Println("error", Agars[c.RoomID][c.Client_id].Agars[lastAgarKey].Speed)
-		// 	Agars[c.RoomID][c.Client_id].Agars[lastAgarKey].Speed -= 0.01
-		// }
 
 		quit := make(chan struct{})
 		var i int = 0
@@ -423,6 +422,8 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 								Data:   js,
 							}
 						}
+
+						// all up if should check here
 
 						// fmt.Println(directions["x"], directions["y"])
 						Agars[c.RoomID][c.Client_id].Agars[lastAgarKey].X = directions["x"]
