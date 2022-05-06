@@ -120,6 +120,10 @@ func (c *Client) ReadPump() {
 
 		var res Data
 		json.Unmarshal([]byte(message), &res)
+		if len(Agars[c.RoomID][c.Client_id].Agars) == 0 {
+			fmt.Println("you have been loose")
+			continue
+		}
 		c.sendResponse(Gamebeads, res.Command, res.Data)
 	}
 }
@@ -277,11 +281,18 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 					}
 					res := checkForOtherAgars.CheckForAgarEatingOtherAgars()
 					if res.Status {
-						agarsArrayHandler := &agar_arrays.Agars{
-							Agars: Agars[c.RoomID][int64(res.EatenClientId)].Agars,
+						fmt.Println(res.EatenAgarId, res.EatenClientId)
+						if res.EatenAgarId == 1 {
+							Agars[c.RoomID][int64(res.EatenClientId)].Agars = make([]trigonometric_circle.AgarDe, 0)
+						} else {
+							agarsArrayHandler := &agar_arrays.Agars{
+								Agars: Agars[c.RoomID][int64(res.EatenClientId)].Agars,
+							}
+							EatenAgarIndex := agarsArrayHandler.GETAgarIndexWithId(res.EatenAgarId)
+							Agars[c.RoomID][int64(res.EatenClientId)].Agars = agarsArrayHandler.RemoveAgarFromArrayWithIndex(EatenAgarIndex)
+
 						}
-						EatenAgarIndex := agarsArrayHandler.GETAgarIndexWithId(res.EatenAgarId)
-						Agars[c.RoomID][int64(res.EatenClientId)].Agars = agarsArrayHandler.RemoveAgarFromArrayWithIndex(EatenAgarIndex)
+
 					}
 				}
 			}
@@ -440,6 +451,7 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 						}
 
 						// all up if should check here
+						// we should min the agars radius if there are more than a pecified number
 
 						// fmt.Println(directions["x"], directions["y"])
 						Agars[c.RoomID][c.Client_id].Agars[lastAgarKey].X = directions["x"]

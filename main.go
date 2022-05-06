@@ -32,7 +32,7 @@ func wsEndpoint(hub *socket.Hub, w http.ResponseWriter, r *http.Request) {
 		socket.Agars[roomId] = make(map[int64]*socket.AgarDetail)
 	}
 
-	if socket.Agars[roomId][Id] == nil {
+	if socket.Agars[roomId][Id] == nil || len(socket.Agars[roomId][Id].Agars) == 0 {
 		socket.Agars[roomId][Id] = &socket.AgarDetail{
 			Client_id: int(Id),
 		}
@@ -46,16 +46,18 @@ func wsEndpoint(hub *socket.Hub, w http.ResponseWriter, r *http.Request) {
 				Name:      "",
 				Max_speed: 7,
 				Speed:     0,
-			}, trigonometric_circle.AgarDe{
-				Lock:      true,
-				Id:        2,
-				X:         300,
-				Y:         100,
-				Radius:    60,
-				Name:      "",
-				Max_speed: 7,
-				Speed:     0,
 			})
+
+			// trigonometric_circle.AgarDe{
+			// 	Lock:      true,
+			// 	Id:        2,
+			// 	X:         300,
+			// 	Y:         100,
+			// 	Radius:    60,
+			// 	Name:      "",
+			// 	Max_speed: 7,
+			// 	Speed:     0,
+			// }
 		} else {
 
 			socket.Agars[roomId][Id].Agars = append(socket.Agars[roomId][Id].Agars, trigonometric_circle.AgarDe{
@@ -63,7 +65,7 @@ func wsEndpoint(hub *socket.Hub, w http.ResponseWriter, r *http.Request) {
 				Id:        1,
 				X:         1000,
 				Y:         100,
-				Radius:    20,
+				Radius:    60,
 				Name:      "",
 				Max_speed: 7,
 				Speed:     0,
