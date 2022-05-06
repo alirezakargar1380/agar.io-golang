@@ -275,7 +275,14 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 						Y:        Agars[c.RoomID][c.Client_id].Agars[i].Y,
 						Radius:   int(Agars[c.RoomID][c.Client_id].Agars[i].Radius),
 					}
-					checkForOtherAgars.CheckForAgarEatingOtherAgars()
+					res := checkForOtherAgars.CheckForAgarEatingOtherAgars()
+					if res.Status {
+						agarsArrayHandler := &agar_arrays.Agars{
+							Agars: Agars[c.RoomID][int64(res.EatenClientId)].Agars,
+						}
+						EatenAgarIndex := agarsArrayHandler.GETAgarIndexWithId(res.EatenAgarId)
+						Agars[c.RoomID][int64(res.EatenClientId)].Agars = agarsArrayHandler.RemoveAgarFromArrayWithIndex(EatenAgarIndex)
+					}
 				}
 			}
 		}
