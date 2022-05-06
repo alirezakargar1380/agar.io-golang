@@ -32,47 +32,48 @@ func wsEndpoint(hub *socket.Hub, w http.ResponseWriter, r *http.Request) {
 		socket.Agars[roomId] = make(map[int64]*socket.AgarDetail)
 	}
 
-	if socket.Agars[roomId][Id] == nil || len(socket.Agars[roomId][Id].Agars) == 0 {
-		socket.Agars[roomId][Id] = &socket.AgarDetail{
-			Client_id: int(Id),
-		}
-		if Id == 1 {
-			socket.Agars[roomId][Id].Agars = append(socket.Agars[roomId][Id].Agars, trigonometric_circle.AgarDe{
-				Lock:      false,
-				Id:        1,
-				X:         100,
-				Y:         100,
-				Radius:    50,
-				Name:      "",
-				Max_speed: 7,
-				Speed:     0,
-			})
-
-			// trigonometric_circle.AgarDe{
-			// 	Lock:      true,
-			// 	Id:        2,
-			// 	X:         300,
-			// 	Y:         100,
-			// 	Radius:    60,
-			// 	Name:      "",
-			// 	Max_speed: 7,
-			// 	Speed:     0,
-			// }
-		} else {
-
-			socket.Agars[roomId][Id].Agars = append(socket.Agars[roomId][Id].Agars, trigonometric_circle.AgarDe{
-				Lock:      false,
-				Id:        1,
-				X:         1000,
-				Y:         100,
-				Radius:    60,
-				Name:      "",
-				Max_speed: 7,
-				Speed:     0,
-			})
-
-		}
+	// if socket.Agars[roomId][Id] == nil || len(socket.Agars[roomId][Id].Agars) == 0 {
+	socket.Agars[roomId][Id] = &socket.AgarDetail{
+		Client_id: int(Id),
 	}
+	if Id == 1 {
+		socket.Agars[roomId][Id].Color = "0xdfbg004"
+		socket.Agars[roomId][Id].Agars = append(socket.Agars[roomId][Id].Agars, trigonometric_circle.AgarDe{
+			Lock:      false,
+			Id:        1,
+			X:         100,
+			Y:         100,
+			Radius:    50,
+			Name:      "",
+			Max_speed: 7,
+			Speed:     0,
+		})
+
+		// trigonometric_circle.AgarDe{
+		// 	Lock:      true,
+		// 	Id:        2,
+		// 	X:         300,
+		// 	Y:         100,
+		// 	Radius:    60,
+		// 	Name:      "",
+		// 	Max_speed: 7,
+		// 	Speed:     0,
+		// }
+	} else {
+		socket.Agars[roomId][Id].Color = "0xdfff994"
+		socket.Agars[roomId][Id].Agars = append(socket.Agars[roomId][Id].Agars, trigonometric_circle.AgarDe{
+			Lock:      false,
+			Id:        1,
+			X:         100,
+			Y:         250,
+			Radius:    60,
+			Name:      "",
+			Max_speed: 7,
+			Speed:     0,
+		})
+
+	}
+	// }
 
 	// index := 1
 	// socket.Agars[roomId][Id].Agars = append(socket.Agars[roomId][Id].Agars[:index], socket.Agars[roomId][Id].Agars[index+1:]...)
@@ -86,12 +87,21 @@ func wsEndpoint(hub *socket.Hub, w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
+	var color string = ""
+	fmt.Println(Id, "...")
+	if Id == 1 {
+		color = "0xdfbg004"
+	} else {
+		color = "0xdfff994"
+	}
+
 	client := &socket.Client{
 		Client_id: Id,
 		RoomID:    roomId,
 		Hub:       hub,
 		Conn:      ws,
 		Send:      make(chan []byte, 256),
+		Color:     color,
 	}
 	client.Hub.Register <- client
 	log.Println("Client successfully connected...")

@@ -44,6 +44,7 @@ type Client struct {
 	Hub       *Hub
 	Conn      *websocket.Conn
 	Send      chan []byte
+	Color     string
 }
 
 type Message struct {
@@ -68,6 +69,8 @@ func (c *Client) ReadPump() {
 		c.Hub.Unregister <- c
 		c.Conn.Close()
 	}()
+
+	fmt.Println(c.Client_id, "connected...")
 
 	c.Conn.SetReadLimit(maxMessageSize)
 	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
@@ -169,6 +172,7 @@ type Agar struct {
 type AgarDetail struct {
 	Agars     []trigonometric_circle.AgarDe
 	Client_id int
+	Color     string
 }
 
 func GetMaxSpeedWithRadius(Radius float64) float64 {
@@ -281,7 +285,6 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 					}
 					res := checkForOtherAgars.CheckForAgarEatingOtherAgars()
 					if res.Status {
-						fmt.Println(res.EatenAgarId, res.EatenClientId)
 						if res.EatenAgarId == 1 {
 							Agars[c.RoomID][int64(res.EatenClientId)].Agars = make([]trigonometric_circle.AgarDe, 0)
 						} else {
@@ -290,9 +293,7 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 							}
 							EatenAgarIndex := agarsArrayHandler.GETAgarIndexWithId(res.EatenAgarId)
 							Agars[c.RoomID][int64(res.EatenClientId)].Agars = agarsArrayHandler.RemoveAgarFromArrayWithIndex(EatenAgarIndex)
-
 						}
-
 					}
 				}
 			}
@@ -325,7 +326,6 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 			lastId = agar.Id
 		}
 		newId = lastId + 1
-		fmt.Println("adding new agar id:", newId)
 		newRadius = 20
 
 		Agars[c.RoomID][c.Client_id].Agars[0].Radius = Agars[c.RoomID][c.Client_id].Agars[0].Radius - 20
@@ -352,14 +352,16 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 		}
 		directions := tri.Test(d["angle"].(float64))
 
-		fmt.Println(lastAgarKey, len(Agars[c.RoomID][c.Client_id].Agars))
-
 		var new_agar_response map[string]string = make(map[string]string)
 		new_agar_response["Command"] = "/new_agar"
+		new_agar_response["start_x"] = fmt.Sprintf("%v", Agars[c.RoomID][c.Client_id].Agars[0].X)
+		new_agar_response["start_y"] = fmt.Sprintf("%v", Agars[c.RoomID][c.Client_id].Agars[0].Y)
 		new_agar_response["x"] = fmt.Sprintf("%v", directions["x"])
 		new_agar_response["y"] = fmt.Sprintf("%v", directions["y"])
 		new_agar_response["radius"] = fmt.Sprintf("%v", newRadius)
 		new_agar_response["id"] = fmt.Sprintf("%v", newId)
+		new_agar_response["color"] = fmt.Sprintf("%v", c.Color)
+		new_agar_response["client_id"] = fmt.Sprintf("%v", c.Client_id)
 
 		reeee, _ := json.Marshal(new_agar_response)
 		c.Hub.Broadcast <- &Message{
@@ -377,28 +379,6 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 				case <-ticker.C:
 					i++
 					if i > 5 {
-						// movement_res["Command"] = "/move_agars"
-						// dd, err := json.Marshal(Agars[c.RoomID])
-						// if err != nil {
-						// 	fmt.Println(err)
-						// 	return
-						// }
-
-						// movement_res["agars"] = string(dd)
-						// if err != nil {
-						// 	return
-						// }
-
-						// js, err := json.Marshal(movement_res)
-						// if err != nil {
-						// 	fmt.Println(err)
-						// 	return
-						// }
-
-						// c.Hub.Broadcast <- &Message{
-						// 	roomID: c.RoomID,
-						// 	Data:   js,
-						// }
 						quit <- struct{}{}
 					} else {
 						tri := &trigonometric_circle.AgarDetail{
@@ -453,26 +433,8 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 						// all up if should check here
 						// we should min the agars radius if there are more than a pecified number
 
-						// fmt.Println(directions["x"], directions["y"])
 						Agars[c.RoomID][c.Client_id].Agars[lastAgarKey].X = directions["x"]
 						Agars[c.RoomID][c.Client_id].Agars[lastAgarKey].Y = directions["y"]
-
-						// dd, err := json.Marshal(Agars[c.RoomID])
-						// if err != nil {
-						// 	fmt.Println(err)
-						// 	return
-						// }
-						// movement_res["agars"] = string(dd)
-						// js, err := json.Marshal(movement_res)
-						// if err != nil {
-						// 	fmt.Println(err)
-						// 	return
-						// }
-
-						// c.Hub.Broadcast <- &Message{
-						// 	roomID: c.RoomID,
-						// 	Data:   js,
-						// }
 					}
 				case <-quit:
 					fmt.Println("quit...")
@@ -496,6 +458,7 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 		}
 		res["agars"] = string(dd)
 		res["beads"] = string(beadss)
+		res["color"] = c.Color
 		js, err := json.Marshal(res)
 		if err != nil {
 			fmt.Println(err)
