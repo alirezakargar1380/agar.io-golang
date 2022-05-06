@@ -17,17 +17,33 @@ type AgarPosition struct {
 }
 
 type AllAgars struct {
-	Agars  []trigonometric_circle.AgarDe
-	Id     int
-	X      float64
-	Y      float64
-	Radius int
+	Agars    []trigonometric_circle.AgarDe
+	ClientId int
+	RivalId  int
+	Id       int
+	X        float64
+	Y        float64
+	Radius   int
 }
 
 type CheckForEatingResponse struct {
 	Status           bool
 	Eated_agar_id    int
 	Eated_agar_by_id int
+}
+
+func (agars *AllAgars) CheckForAgarEatingOtherAgars() {
+	for _, v := range agars.Agars {
+		distance := trigonometric_circle.GetDistanceBetweenTowPoint(v.X, v.Y, agars.X, agars.Y)
+		if distance < float64(agars.Radius)+v.Radius {
+			if float64(agars.Radius) > v.Radius {
+				// fmt.Println(agars.Id, "for", agars.ClientId)
+				fmt.Println(agars.ClientId, "is eating", agars.RivalId)
+			} else {
+				fmt.Println(agars.RivalId, "is eating", agars.ClientId)
+			}
+		}
+	}
 }
 
 func (agars *AllAgars) CheckForEating() CheckForEatingResponse {
@@ -53,11 +69,6 @@ func (agars *AllAgars) CheckForEating() CheckForEatingResponse {
 			} else {
 				response.Eated_agar_by_id = agars.Id
 			}
-			// if float64(agars.Radius) > v.Radius {
-			// 	fmt.Println(agars.Id)
-			// } else {
-			// 	fmt.Println(v.Id)
-			// }
 		}
 	}
 	return response

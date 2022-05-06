@@ -266,7 +266,16 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 			// check for other user agars if they eat together
 			for _, v := range Agars[c.RoomID] {
 				if int64(v.Client_id) != c.Client_id {
-					fmt.Println(v.Client_id)
+					checkForOtherAgars := agar.AllAgars{
+						ClientId: int(c.Client_id),
+						RivalId:  v.Client_id,
+						Agars:    v.Agars,
+						Id:       Agars[c.RoomID][c.Client_id].Agars[i].Id,
+						X:        Agars[c.RoomID][c.Client_id].Agars[i].X,
+						Y:        Agars[c.RoomID][c.Client_id].Agars[i].Y,
+						Radius:   int(Agars[c.RoomID][c.Client_id].Agars[i].Radius),
+					}
+					checkForOtherAgars.CheckForAgarEatingOtherAgars()
 				}
 			}
 		}
