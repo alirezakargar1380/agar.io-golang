@@ -92,6 +92,41 @@ func (agars *AllAgars) CheckForEating() CheckForEatingResponse {
 	return response
 }
 
+func (agars *AllAgars) CheckForEatingWhenT() CheckForEatingResponse {
+	var response CheckForEatingResponse = CheckForEatingResponse{
+		Status: false,
+	}
+	for _, v := range agars.Agars {
+		if v.Id == agars.Id || v.Id == 1 {
+			continue
+		}
+		distance := trigonometric_circle.GetDistanceBetweenTowPoint(v.X, v.Y, agars.X, agars.Y)
+		if distance < float64(agars.Radius)+v.Radius {
+			response.Status = true
+			response.Eated_agar_id = len(agars.Agars)
+
+			if response.Eated_agar_id == agars.Id {
+				// 	if v.Id == 1 {
+				// 		response.Status = false
+				// 	} else {
+
+				response.Eated_agar_by_id = v.Id
+
+				// }
+
+			} else {
+
+				// 	if agars.Id == 1 {
+				// 		response.Status = false
+				// 	} else {
+				response.Eated_agar_by_id = agars.Id
+				// 	}
+			}
+		}
+	}
+	return response
+}
+
 func (agar *AgarPosition) GetAgarSpace() []map[string]float64 {
 	var dir []map[string]float64
 	for angle := 1; angle <= 360; angle++ {

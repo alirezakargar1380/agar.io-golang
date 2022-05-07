@@ -47,18 +47,17 @@ func wsEndpoint(hub *socket.Hub, w http.ResponseWriter, r *http.Request) {
 			Name:      "",
 			Max_speed: 7,
 			Speed:     0,
+		}, trigonometric_circle.AgarDe{
+			Lock:      true,
+			Id:        2,
+			X:         250,
+			Y:         100,
+			Radius:    60,
+			Name:      "",
+			Max_speed: 7,
+			Speed:     0,
 		})
 
-		// trigonometric_circle.AgarDe{
-		// 	Lock:      true,
-		// 	Id:        2,
-		// 	X:         300,
-		// 	Y:         100,
-		// 	Radius:    60,
-		// 	Name:      "",
-		// 	Max_speed: 7,
-		// 	Speed:     0,
-		// }
 	} else {
 		socket.Agars[roomId][Id].Color = "0xdfff994"
 		socket.Agars[roomId][Id].Agars = append(socket.Agars[roomId][Id].Agars, trigonometric_circle.AgarDe{

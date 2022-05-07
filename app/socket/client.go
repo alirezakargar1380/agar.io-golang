@@ -381,6 +381,11 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 					if i > 5 {
 						quit <- struct{}{}
 					} else {
+						agarsNum := len(Agars[c.RoomID][c.Client_id].Agars) - 1
+						if lastAgarKey > agarsNum {
+							continue
+						}
+
 						tri := &trigonometric_circle.AgarDetail{
 							Id:    lastAgar.Id,
 							X:     Agars[c.RoomID][c.Client_id].Agars[lastAgarKey].X,
@@ -394,9 +399,7 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 							Y:      directions["y"],
 							Radius: int(Agars[c.RoomID][c.Client_id].Agars[lastAgarKey].Radius),
 						}
-
 						eat := dir.GetAgarSpace4(beads, c.RoomID)
-
 						if eat.Eat {
 							for i := 0; i < len(eat.Eat_key); i++ {
 								eat_keys = append(eat_keys, eat.Eat_key[i])
@@ -430,11 +433,55 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 							}
 						}
 
-						// all up if should check here
-						// we should min the agars radius if there are more than a pecified number
-
 						Agars[c.RoomID][c.Client_id].Agars[lastAgarKey].X = directions["x"]
 						Agars[c.RoomID][c.Client_id].Agars[lastAgarKey].Y = directions["y"]
+
+						fmt.Println(len(Agars[c.RoomID][c.Client_id].Agars))
+						// all up if should check here
+						// we should min the agars radius if there are more than a pecified number
+						for i := 0; i < len(Agars[c.RoomID][c.Client_id].Agars); i++ {
+							agarObject := Agars[c.RoomID][c.Client_id].Agars[i]
+							if agarObject.Id == 1 {
+								continue
+							}
+							checkAgars := agar.AllAgars{
+								Agars:  Agars[c.RoomID][c.Client_id].Agars,
+								Id:     agarObject.Id,
+								X:      agarObject.X,
+								Y:      agarObject.Y,
+								Radius: int(agarObject.Radius),
+							}
+							eatTogetherResult := checkAgars.CheckForEatingWhenT()
+							if eatTogetherResult.Status {
+								agarsArrayHandler := &agar_arrays.Agars{
+									Agars: Agars[c.RoomID][c.Client_id].Agars,
+								}
+								Eated_agar_by_index := agarsArrayHandler.GETAgarIndexWithId(eatTogetherResult.Eated_agar_by_id)
+								Eated_agar_index := agarsArrayHandler.GETAgarIndexWithId(eatTogetherResult.Eated_agar_id)
+								Agars[c.RoomID][c.Client_id].Agars[Eated_agar_by_index].Radius += Agars[c.RoomID][c.Client_id].Agars[Eated_agar_index].Radius
+								fmt.Println("eaten an agar", eatTogetherResult.Eated_agar_by_id, eatTogetherResult.Eated_agar_id)
+								Agars[c.RoomID][c.Client_id].Agars = agarsArrayHandler.RemoveAgarFromArrayWithIndex(Eated_agar_index)
+
+								movement_res["Command"] = "/move_agars"
+								dd, err := json.Marshal(Agars[c.RoomID])
+								if err != nil {
+									fmt.Println(err)
+									return
+								}
+								movement_res["agars"] = string(dd)
+								js, err := json.Marshal(movement_res)
+								if err != nil {
+									fmt.Println(err)
+									return
+								}
+
+								c.Hub.Broadcast <- &Message{
+									roomID: c.RoomID,
+									Data:   js,
+								}
+							}
+						}
+
 					}
 				case <-quit:
 					fmt.Println("quit...")
