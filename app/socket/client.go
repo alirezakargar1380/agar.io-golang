@@ -193,34 +193,38 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 			}
 			// if d["opration"].(string) == "increse" {
 			percent_of_speed := math.Round(float64(d["percent_of_speed"].(float64)))
-			maxSpeed := GetMaxSpeedWithRadius(Agars[c.RoomID][c.Client_id].Agars[i].Radius)
-			var dd float64 = float64(percent_of_speed*100) * float64(maxSpeed) / 100
-			dd = dd / 100
-			dd = math.Floor(dd*100) / 100
-			if dd == maxSpeed || (dd+0.01) == maxSpeed {
-				if maxSpeed > agarObject.Speed {
-					Agars[c.RoomID][c.Client_id].Agars[i].Speed += 0.1
-				}
+
+			var speed float64
+			if i == 0 {
+				speed = Agars[c.RoomID][c.Client_id].Agars[i].Radius
 			} else {
-				if Agars[c.RoomID][c.Client_id].Agars[i].Speed > 0 {
-					if Agars[c.RoomID][c.Client_id].Agars[i].Speed > dd {
+				speed = Agars[c.RoomID][c.Client_id].Agars[0].Radius - 1
+			}
+
+			maxSpeed := GetMaxSpeedWithRadius(speed)
+			var speedThatUserWant float64 = float64(percent_of_speed*100) * float64(maxSpeed) / 100
+			speedThatUserWant = speedThatUserWant / 100
+			speedThatUserWant = math.Floor(speedThatUserWant*100) / 100
+			// fmt.Println("id", agarObject.Id, "speed", speedThatUserWant, "now speed ", Agars[c.RoomID][c.Client_id].Agars[i].Speed, "max speed", maxSpeed)
+
+			if Agars[c.RoomID][c.Client_id].Agars[i].Speed != maxSpeed {
+				if maxSpeed >= speedThatUserWant {
+					if speedThatUserWant > Agars[c.RoomID][c.Client_id].Agars[i].Speed {
+						Agars[c.RoomID][c.Client_id].Agars[i].Speed += 0.1
+						Agars[c.RoomID][c.Client_id].Agars[i].Speed = math.Floor(Agars[c.RoomID][c.Client_id].Agars[i].Speed*100) / 100
+					} else {
 						Agars[c.RoomID][c.Client_id].Agars[i].Speed -= 0.1
+						Agars[c.RoomID][c.Client_id].Agars[i].Speed = math.Floor(Agars[c.RoomID][c.Client_id].Agars[i].Speed*100) / 100
 					}
 				}
 			}
-			// } else {
-			// 	if Agars[c.RoomID][c.Client_id].Agars[i].Speed >= 0.10 {
-			// 		Agars[c.RoomID][c.Client_id].Agars[i].Speed -= 0.06
-			// 	} else {
-			// 		Agars[c.RoomID][c.Client_id].Agars[i].Speed = 0
-			// 	}
-			// }
 
+			// get new movement (x,y)
 			tri := &trigonometric_circle.AgarDetail{
 				Id:     agarObject.Id,
 				X:      agarObject.X,
 				Y:      agarObject.Y,
-				Speed:  float64(agarObject.Speed),
+				Speed:  float64(Agars[c.RoomID][c.Client_id].Agars[i].Speed),
 				Radius: float64(agarObject.Radius),
 			}
 			directions := tri.Test(d["angle"].(float64))
@@ -281,7 +285,7 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 				Eated_agar_by_index := agarsArrayHandler.GETAgarIndexWithId(eatTogetherResult.Eated_agar_by_id)
 				Eated_agar_index := agarsArrayHandler.GETAgarIndexWithId(eatTogetherResult.Eated_agar_id)
 				Agars[c.RoomID][c.Client_id].Agars[Eated_agar_by_index].Radius += Agars[c.RoomID][c.Client_id].Agars[Eated_agar_index].Radius
-				fmt.Println("REmove an agar")
+				fmt.Println("REmove an agar", eatTogetherResult.Eated_agar_by_id, eatTogetherResult.Eated_agar_id)
 				Agars[c.RoomID][c.Client_id].Agars = agarsArrayHandler.RemoveAgarFromArrayWithIndex(Eated_agar_index)
 			}
 
@@ -362,7 +366,7 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 			Id:    lastAgar.Id,
 			X:     Agars[c.RoomID][c.Client_id].Agars[lastAgarKey].X,
 			Y:     Agars[c.RoomID][c.Client_id].Agars[lastAgarKey].Y,
-			Speed: float64(Agars[c.RoomID][c.Client_id].Agars[0].Radius * 5),
+			Speed: float64(Agars[c.RoomID][c.Client_id].Agars[0].Radius) + (4 * 20),
 		}
 		directions := tri.Test(d["angle"].(float64))
 
@@ -400,11 +404,18 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 							continue
 						}
 
+						var speed float64 = 0
+						if i == 1 {
+							speed = Agars[c.RoomID][c.Client_id].Agars[0].Radius
+						} else {
+							speed = 20
+						}
+
 						tri := &trigonometric_circle.AgarDetail{
 							Id:    lastAgar.Id,
 							X:     Agars[c.RoomID][c.Client_id].Agars[lastAgarKey].X,
 							Y:     Agars[c.RoomID][c.Client_id].Agars[lastAgarKey].Y,
-							Speed: float64(Agars[c.RoomID][c.Client_id].Agars[0].Radius),
+							Speed: float64(speed),
 						}
 						directions := tri.Test(d["angle"].(float64))
 
@@ -450,7 +461,6 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 						Agars[c.RoomID][c.Client_id].Agars[lastAgarKey].X = directions["x"]
 						Agars[c.RoomID][c.Client_id].Agars[lastAgarKey].Y = directions["y"]
 
-						fmt.Println(len(Agars[c.RoomID][c.Client_id].Agars))
 						// all up if should check here
 						// we should min the agars radius if there are more than a pecified number
 						for i := 0; i < len(Agars[c.RoomID][c.Client_id].Agars); i++ {
@@ -492,6 +502,49 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 								c.Hub.Broadcast <- &Message{
 									roomID: c.RoomID,
 									Data:   js,
+								}
+							}
+
+							for _, v := range Agars[c.RoomID] {
+								if int64(v.Client_id) != c.Client_id {
+									checkForOtherAgars := agar.AllAgars{
+										ClientId: int(c.Client_id),
+										RivalId:  v.Client_id,
+										Agars:    v.Agars,
+										Id:       Agars[c.RoomID][c.Client_id].Agars[i].Id,
+										X:        Agars[c.RoomID][c.Client_id].Agars[i].X,
+										Y:        Agars[c.RoomID][c.Client_id].Agars[i].Y,
+										Radius:   int(Agars[c.RoomID][c.Client_id].Agars[i].Radius),
+									}
+									res := checkForOtherAgars.CheckForAgarEatingOtherAgars()
+									if res.Status {
+										if res.EatenAgarId == 1 {
+											Agars[c.RoomID][int64(res.EatenClientId)].Agars = make([]trigonometric_circle.AgarDe, 0)
+										} else {
+											agarsArrayHandler := &agar_arrays.Agars{
+												Agars: Agars[c.RoomID][int64(res.EatenClientId)].Agars,
+											}
+											EatenAgarIndex := agarsArrayHandler.GETAgarIndexWithId(res.EatenAgarId)
+											Agars[c.RoomID][int64(res.EatenClientId)].Agars = agarsArrayHandler.RemoveAgarFromArrayWithIndex(EatenAgarIndex)
+										}
+									}
+									movement_res["Command"] = "/move_agars"
+									dd, err := json.Marshal(Agars[c.RoomID])
+									if err != nil {
+										fmt.Println(err)
+										return
+									}
+									movement_res["agars"] = string(dd)
+									js, err := json.Marshal(movement_res)
+									if err != nil {
+										fmt.Println(err)
+										return
+									}
+
+									c.Hub.Broadcast <- &Message{
+										roomID: c.RoomID,
+										Data:   js,
+									}
 								}
 							}
 						}
