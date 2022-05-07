@@ -66,7 +66,9 @@ func (agars *AllAgars) CheckForAgarEatingOtherAgars() CheckForAgarEatingOtherAga
 
 func (agars *AllAgars) CheckForEating() CheckForEatingResponse {
 	var response CheckForEatingResponse = CheckForEatingResponse{
-		Status: false,
+		Status:           false,
+		Eated_agar_id:    1000,
+		Eated_agar_by_id: 1000,
 	}
 	for _, v := range agars.Agars {
 		if v.Id == agars.Id {
@@ -75,11 +77,9 @@ func (agars *AllAgars) CheckForEating() CheckForEatingResponse {
 		distance := trigonometric_circle.GetDistanceBetweenTowPoint(v.X, v.Y, agars.X, agars.Y)
 		if distance < float64(agars.Radius)+v.Radius {
 			response.Status = true
-			if v.Id == 1 {
+			response.Eated_agar_id = v.Id
+			if response.Eated_agar_id == 1 {
 				response.Eated_agar_id = agars.Id
-			}
-			if agars.Id == 1 {
-				response.Eated_agar_id = v.Id
 			}
 
 			if response.Eated_agar_id == agars.Id {
