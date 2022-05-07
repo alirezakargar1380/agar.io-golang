@@ -42,7 +42,7 @@ func wsEndpoint(hub *socket.Hub, w http.ResponseWriter, r *http.Request) {
 			Lock:      false,
 			Id:        1,
 			X:         100,
-			Y:         100,
+			Y:         2900,
 			Radius:    50,
 			Name:      "",
 			Max_speed: 7,

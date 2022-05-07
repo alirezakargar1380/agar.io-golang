@@ -229,6 +229,20 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 				tri.CheckForEatTogether(Agars[c.RoomID][c.Client_id].Agars)
 			}
 
+			if directions["y"] < 0 {
+				directions["y"] = 0
+			}
+			if directions["y"] > 3000 {
+				directions["y"] = 3000
+			}
+
+			if directions["x"] < 0 {
+				directions["x"] = 0
+			}
+			if directions["x"] > 3000 {
+				directions["x"] = 3000
+			}
+
 			Agars[c.RoomID][c.Client_id].Agars[i].X = directions["x"]
 			Agars[c.RoomID][c.Client_id].Agars[i].Y = directions["y"]
 
