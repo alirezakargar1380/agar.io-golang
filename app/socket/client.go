@@ -70,8 +70,6 @@ func (c *Client) ReadPump() {
 		c.Conn.Close()
 	}()
 
-	fmt.Println(c.Client_id, "connected...")
-
 	c.Conn.SetReadLimit(maxMessageSize)
 	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.Conn.SetPongHandler(func(string) error { c.Conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })

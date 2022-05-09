@@ -17,13 +17,10 @@ func NewHub() *Hub {
 	}
 }
 
-// var Rooms map[string]map[*Client]bool = make(map[string]map[*Client]bool)
-
 func (h *Hub) Run() {
 	for {
 		select {
 		case client := <-h.Register:
-			// roomTest := h.Rooms[client.RoomID]
 			if h.Rooms == nil {
 				h.Rooms = make(map[string]map[*Client]bool)
 			}
