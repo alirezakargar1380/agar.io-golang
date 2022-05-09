@@ -125,6 +125,20 @@ func main() {
 		}),
 	}
 
+	// val, _ := redis_db.Client.Client.Get("star").Result()
+
+	// if val == "" {
+	// 	fmt.Println("im emty")
+	// }
+	// redis_db.Client.Client.Set("star", "sdf", 0).Err()
+
+	// vv, _ := redis_db.Client.Client.Get("star").Result()
+	// if vv == "" {
+	// 	fmt.Println("im emty")
+	// } else {
+	// 	fmt.Println("im not empty")
+	// }
+
 	// var redisClient *redis.Client = redis.NewClient(&redis.Options{
 	// 	Addr:     "localhost:6379",
 	// 	Password: "",

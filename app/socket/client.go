@@ -85,14 +85,7 @@ func (c *Client) ReadPump() {
 			case <-ticker.C:
 				if len(Gamebeads.Beads[c.RoomID]) == 20 {
 					continue
-					// fmt.Println("---> beads are full")
 				} else {
-					redis_db.Client.Test()
-					pong, err := redis_db.Client.Client.Ping().Result()
-					if err != nil {
-						fmt.Println(err)
-					}
-					fmt.Println(pong, err)
 					min := 500
 					max := 1000
 					x := rand.Intn(max-min+1) + min
@@ -102,7 +95,8 @@ func (c *Client) ReadPump() {
 					p["x"] = fmt.Sprintf("%v", x)
 					p["y"] = fmt.Sprintf("%v", y)
 					key := p["x"] + "_" + p["y"]
-					Gamebeads.Set(c.RoomID, key)
+					redis_db.Client.AddStar(key, c.RoomID)
+					// Gamebeads.Set(c.RoomID, key)
 					json, _ := json.Marshal(p)
 					c.Hub.Broadcast <- &Message{
 						roomID: c.RoomID,
