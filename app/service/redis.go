@@ -21,6 +21,7 @@ func (c *RedisDb) Test() {
 }
 
 func (c *RedisDb) AddStar(key string, roomId string) {
+	return
 	var stars *stars.Star = &stars.Star{
 		Star: make(map[string]map[string]bool),
 	}
@@ -53,4 +54,17 @@ func (c *RedisDb) AddStar(key string, roomId string) {
 	// }
 	// json.Unmarshal([]byte(vv), &stars.Star)
 	// fmt.Println(len(stars.Star[roomId]))
+}
+
+func (c *RedisDb) GetStars(roomId string) map[string]bool {
+	var stars *stars.Star = &stars.Star{
+		Star: make(map[string]map[string]bool),
+	}
+	vv, err := c.Client.Get("stars").Result()
+	if err != nil {
+		fmt.Println(err)
+	}
+	json.Unmarshal([]byte(vv), &stars.Star)
+
+	return stars.Star[roomId]
 }

@@ -255,9 +255,12 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 				Radius: int(Agars[c.RoomID][c.Client_id].Agars[i].Radius),
 			}
 
+			sss := redis_db.Client.GetStars(c.RoomID)
+			// fmt.Println(sss)
 			// check agar eat bead
-			eat := dir.GetAgarSpace4(beads, c.RoomID)
+			eat := dir.GetAgarSpace5(sss, c.RoomID)
 			if eat.Eat {
+				fmt.Println("eat")
 				eatKeys, err := json.Marshal(eat.Eat_key)
 				if err != nil {
 					return

@@ -162,6 +162,33 @@ func (agar *AgarPosition) getDistance(to_x float64, to_y float64) float64 {
 	return math.Sqrt(x*x + y*y)
 }
 
+func (agar *AgarPosition) GetAgarSpace5(stars map[string]bool, RoomId string) Re {
+	var eat bool = false
+	var eatKey []string = make([]string, 0)
+	for key := range stars {
+		positions := strings.Split(key, "_")
+		beadX, error := strconv.Atoi(positions[0])
+		if error != nil {
+			fmt.Println(error)
+		}
+		beadY, error := strconv.Atoi(positions[1])
+		if error != nil {
+			fmt.Println(error)
+		}
+		if agar.getDistance(float64(beadX), float64(beadY)) < float64(agar.Radius) {
+			eat = true
+			// eatKey = key
+			eatKey = append(eatKey, key)
+			// delete(beads.Beads[RoomId], key)
+		}
+	}
+
+	return Re{
+		Eat:     eat,
+		Eat_key: eatKey,
+	}
+}
+
 func (agar *AgarPosition) GetAgarSpace4(beads *beads.Beads, RoomId string) Re {
 	var eat bool = false
 	var eatKey []string = make([]string, 0)
