@@ -10,6 +10,7 @@ import (
 
 	"github.com/alirezakargar1380/agar.io-golang/app/agar"
 	"github.com/alirezakargar1380/agar.io-golang/app/beads"
+	redis_db "github.com/alirezakargar1380/agar.io-golang/app/service"
 	"github.com/alirezakargar1380/agar.io-golang/app/trigonometric_circle"
 	agar_arrays "github.com/alirezakargar1380/agar.io-golang/app/utils"
 	"github.com/gorilla/websocket"
@@ -86,6 +87,12 @@ func (c *Client) ReadPump() {
 					continue
 					// fmt.Println("---> beads are full")
 				} else {
+					redis_db.Client.Test()
+					pong, err := redis_db.Client.Client.Ping().Result()
+					if err != nil {
+						fmt.Println(err)
+					}
+					fmt.Println(pong, err)
 					min := 500
 					max := 1000
 					x := rand.Intn(max-min+1) + min
