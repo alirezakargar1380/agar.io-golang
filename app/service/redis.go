@@ -32,7 +32,6 @@ func (c *RedisDb) AddStar(key string, roomId string) {
 	} else {
 		json.Unmarshal([]byte(starsMap), &stars.Star)
 		if stars.Star[roomId] == nil {
-			fmt.Println("nil")
 			stars.Star[roomId] = make(map[string]bool)
 		}
 		stars.Star[roomId][key] = true

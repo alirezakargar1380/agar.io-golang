@@ -567,11 +567,13 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 			fmt.Println(err)
 			return
 		}
-		beadss, err := json.Marshal(Gamebeads.Beads[c.RoomID])
+		sss := redis_db.Client.GetStars(c.RoomID)
+		beadss, err := json.Marshal(sss)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
+
 		res["agars"] = string(dd)
 		res["beads"] = string(beadss)
 		res["color"] = c.Color
