@@ -21,7 +21,6 @@ func (c *RedisDb) Test() {
 }
 
 func (c *RedisDb) AddStar(key string, roomId string) {
-	return
 	var stars *stars.Star = &stars.Star{
 		Star: make(map[string]map[string]bool),
 	}
@@ -46,22 +45,47 @@ func (c *RedisDb) AddStar(key string, roomId string) {
 	if err != nil {
 		fmt.Println(err)
 	}
+}
 
-	// vv, err := c.Client.Get("stars").Result()
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-	// json.Unmarshal([]byte(vv), &stars.Star)
-	// fmt.Println(len(stars.Star[roomId]))
+func (c *RedisDb) CountStars(roomId string) int {
+	var stars *stars.Star = &stars.Star{
+		Star: make(map[string]map[string]bool),
+	}
+	vv, _ := c.Client.Get("stars").Result()
+	json.Unmarshal([]byte(vv), &stars.Star)
+
+	return len(stars.Star[roomId])
+}
+
+func (c *RedisDb) DeleteStart(roomId string, keys []string) {
+	var stars *stars.Star = &stars.Star{
+		Star: make(map[string]map[string]bool),
+	}
+	vv, _ := c.Client.Get("stars").Result()
+	if vv == "" {
+		stars.Star[roomId] = make(map[string]bool)
+	}
+	json.Unmarshal([]byte(vv), &stars.Star)
+
+	for _, E := range keys {
+		delete(stars.Star[roomId], E)
+	}
+
+	pp, _ := json.Marshal(stars.Star)
+
+	err := c.Client.Set("stars", pp, 0).Err()
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 func (c *RedisDb) GetStars(roomId string) map[string]bool {
 	var stars *stars.Star = &stars.Star{
 		Star: make(map[string]map[string]bool),
 	}
-	vv, err := c.Client.Get("stars").Result()
-	if err != nil {
-		fmt.Println(err)
+	vv, _ := c.Client.Get("stars").Result()
+	if vv == "" {
+		stars.Star[roomId] = make(map[string]bool)
 	}
 	json.Unmarshal([]byte(vv), &stars.Star)
 
