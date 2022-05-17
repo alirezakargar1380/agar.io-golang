@@ -83,7 +83,7 @@ func (c *Client) ReadPump() {
 		for {
 			select {
 			case <-ticker.C:
-				if len(Gamebeads.Beads[c.RoomID]) == 20 {
+				if redis_db.Client.CountStars(c.RoomID) == 2 {
 					continue
 				} else {
 					min := 500
@@ -260,12 +260,13 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 			// check agar eat bead
 			eat := dir.GetAgarSpace5(sss, c.RoomID)
 			if eat.Eat {
-				fmt.Println("eat")
+				fmt.Println("eat", eat.Eat_key)
 				eatKeys, err := json.Marshal(eat.Eat_key)
 				if err != nil {
 					return
 				}
 				res["eat_key"] = string(eatKeys)
+				redis_db.Client.DeleteStart(c.RoomID, eat.Eat_key)
 				if Agars[c.RoomID][c.Client_id].Agars[i].Radius < 450 {
 					Agars[c.RoomID][c.Client_id].Agars[i].Radius += 2
 				}

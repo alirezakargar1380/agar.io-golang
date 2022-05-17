@@ -42,8 +42,8 @@ func wsEndpoint(hub *socket.Hub, w http.ResponseWriter, r *http.Request) {
 			socket.Agars[roomId][Id].Agars = append(socket.Agars[roomId][Id].Agars, trigonometric_circle.AgarDe{
 				Lock:      false,
 				Id:        1,
-				X:         100,
-				Y:         2900,
+				X:         800,
+				Y:         1900,
 				Radius:    50,
 				Name:      "",
 				Max_speed: 7,
