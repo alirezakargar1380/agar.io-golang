@@ -32,7 +32,7 @@ func (h *Hub) Run() {
 
 		case <-h.Unregister:
 		case message := <-h.Broadcast:
-			room := h.Rooms[message.roomID]
+			room := h.Rooms[message.RoomID]
 			for Client := range room {
 				select {
 				case Client.Send <- message.Data:
@@ -42,7 +42,7 @@ func (h *Hub) Run() {
 				}
 			}
 			if len(room) == 0 {
-				delete(h.Rooms, message.roomID)
+				delete(h.Rooms, message.RoomID)
 			}
 		}
 	}

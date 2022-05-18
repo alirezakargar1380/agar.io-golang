@@ -33,47 +33,56 @@ func wsEndpoint(hub *socket.Hub, w http.ResponseWriter, r *http.Request) {
 		socket.Agars[roomId] = make(map[int64]*socket.AgarDetail)
 	}
 
-	if socket.Agars[roomId][Id] == nil || len(socket.Agars[roomId][Id].Agars) == 0 {
-		socket.Agars[roomId][Id] = &socket.AgarDetail{
-			Client_id: int(Id),
-		}
-		if Id == 1 {
-			socket.Agars[roomId][Id].Color = "0xdfbg004"
-			socket.Agars[roomId][Id].Agars = append(socket.Agars[roomId][Id].Agars, trigonometric_circle.AgarDe{
-				Lock:      false,
-				Id:        1,
-				X:         800,
-				Y:         1900,
-				Radius:    50,
-				Name:      "",
-				Max_speed: 7,
-				Speed:     0,
-			}, trigonometric_circle.AgarDe{
-				Lock:      true,
-				Id:        2,
-				X:         100,
-				Y:         2750,
-				Radius:    60,
-				Name:      "",
-				Max_speed: 7,
-				Speed:     0,
-			})
-
-		} else {
-			socket.Agars[roomId][Id].Color = "0xdfff994"
-			socket.Agars[roomId][Id].Agars = append(socket.Agars[roomId][Id].Agars, trigonometric_circle.AgarDe{
-				Lock:      false,
-				Id:        1,
-				X:         300,
-				Y:         2900,
-				Radius:    60,
-				Name:      "",
-				Max_speed: 7,
-				Speed:     0,
-			})
-
-		}
+	// if socket.Agars[roomId][Id] == nil || len(socket.Agars[roomId][Id].Agars) == 0 {
+	socket.Agars[roomId][Id] = &socket.AgarDetail{
+		Client_id: int(Id),
 	}
+	if Id == 1 {
+		socket.Agars[roomId][Id].Color = "0xdfbg004"
+		socket.Agars[roomId][Id].Agars = append(socket.Agars[roomId][Id].Agars, trigonometric_circle.AgarDe{
+			Lock:      false,
+			Id:        1,
+			X:         250,
+			Y:         2750,
+			Radius:    50,
+			Name:      "",
+			Max_speed: 7,
+			Speed:     0,
+		}, trigonometric_circle.AgarDe{
+			Lock:      true,
+			Id:        2,
+			X:         100,
+			Y:         2750,
+			Radius:    60,
+			Name:      "",
+			Max_speed: 7,
+			Speed:     0,
+		})
+
+	} else {
+		socket.Agars[roomId][Id].Color = "0xdfff994"
+		socket.Agars[roomId][Id].Agars = append(socket.Agars[roomId][Id].Agars, trigonometric_circle.AgarDe{
+			Lock:      false,
+			Id:        1,
+			X:         300,
+			Y:         2900,
+			Radius:    59,
+			Name:      "",
+			Max_speed: 7,
+			Speed:     0,
+		}, trigonometric_circle.AgarDe{
+			Lock:      false,
+			Id:        2,
+			X:         400,
+			Y:         2900,
+			Radius:    20,
+			Name:      "",
+			Max_speed: 7,
+			Speed:     0,
+		})
+
+	}
+	// }
 
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 
@@ -96,6 +105,7 @@ func wsEndpoint(hub *socket.Hub, w http.ResponseWriter, r *http.Request) {
 		Conn:      ws,
 		Send:      make(chan []byte, 256),
 		Color:     color,
+		Loose:     false,
 	}
 	client.Hub.Register <- client
 	log.Println("Client successfully connected...", clientId)
@@ -119,77 +129,18 @@ func main() {
 
 	redis_db.Client = &redis_db.RedisDb{
 		Client: redis.NewClient(&redis.Options{
-			Addr:     "localhost:6379",
+			Addr:     "127.0.0.1:6379",
 			Password: "",
 			DB:       0,
 		}),
 	}
 
-	// val, _ := redis_db.Client.Client.Get("star").Result()
-
-	// if val == "" {
-	// 	fmt.Println("im emty")
-	// }
-	// redis_db.Client.Client.Set("star", "sdf", 0).Err()
-
-	// vv, _ := redis_db.Client.Client.Get("star").Result()
-	// if vv == "" {
-	// 	fmt.Println("im emty")
-	// } else {
-	// 	fmt.Println("im not empty")
-	// }
-
-	// var redisClient *redis.Client = redis.NewClient(&redis.Options{
-	// 	Addr:     "localhost:6379",
-	// 	Password: "",
-	// 	DB:       0,
-	// })
-
-	// var stars map[string]bool = make(map[string]bool)
-	// for x := 0; x < 100; x++ {
-	// 	for y := 0; y < 100; y++ {
-	// 		key := fmt.Sprintf("%d_%d", x, y)
-	// 		stars[key] = true
-	// 	}
-	// }
-
-	// ParseStars, err := json.Marshal(stars)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-
-	// err = redisClient.Set("stars", ParseStars, 0).Err()
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-
-	// val, err := redisClient.Get("stars").Result()
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-
-	// json.Unmarshal([]byte(val), &stars)
-	// fmt.Println(stars["1_99"])
-	// delete(stars, "1_99")
-	// fmt.Println(stars["1_99"])
-
-	// pp, err := json.Marshal(stars)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-
-	// err = redisClient.Set("stars", pp, 0).Err()
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-
-	// vv, err := redisClient.Get("stars").Result()
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-
-	// json.Unmarshal([]byte(vv), &stars)
-	// fmt.Println(stars["1_99"])
+	pong, err := redis_db.Client.Client.Ping().Result()
+	if err == nil {
+		fmt.Println(pong)
+	} else {
+		panic(err)
+	}
 
 	// return
 	setupRoutes()

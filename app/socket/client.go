@@ -46,10 +46,11 @@ type Client struct {
 	Conn      *websocket.Conn
 	Send      chan []byte
 	Color     string
+	Loose     bool
 }
 
 type Message struct {
-	roomID string
+	RoomID string
 	Data   []byte
 }
 
@@ -83,7 +84,7 @@ func (c *Client) ReadPump() {
 		for {
 			select {
 			case <-ticker.C:
-				if redis_db.Client.CountStars(c.RoomID) == 2 {
+				if redis_db.Client.CountStars(c.RoomID) >= 110 {
 					continue
 				} else {
 					min := 500
@@ -99,7 +100,7 @@ func (c *Client) ReadPump() {
 					// Gamebeads.Set(c.RoomID, key)
 					json, _ := json.Marshal(p)
 					c.Hub.Broadcast <- &Message{
-						roomID: c.RoomID,
+						RoomID: c.RoomID,
 						Data:   []byte(json),
 					}
 				}
@@ -123,7 +124,18 @@ func (c *Client) ReadPump() {
 		var res Data
 		json.Unmarshal([]byte(message), &res)
 		if len(Agars[c.RoomID][c.Client_id].Agars) == 0 {
-			fmt.Println("you have been loose")
+			if !c.Loose {
+				c.Loose = true
+				var res map[string]string = make(map[string]string)
+				res["Command"] = "/finish_game"
+				res["LooserId"] = fmt.Sprintf("%v", c.Client_id)
+				jData, _ := json.Marshal(res)
+				c.Hub.Broadcast <- &Message{
+					RoomID: c.RoomID,
+					Data:   jData,
+				}
+				fmt.Println("you have been loose", c.Client_id)
+			}
 			continue
 		}
 		c.sendResponse(Gamebeads, res.Command, res.Data)
@@ -181,6 +193,14 @@ func GetMaxSpeedWithRadius(Radius float64) float64 {
 
 func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data interface{}) {
 	switch command {
+	case "/create_battle":
+		var res map[string]string = make(map[string]string)
+		res["Command"] = "/start_game"
+		jData, _ := json.Marshal(res)
+		c.Hub.Broadcast <- &Message{
+			RoomID: c.RoomID,
+			Data:   jData,
+		}
 	case "/move":
 		// fmt.Println("move...")
 		var res map[string]string = make(map[string]string)
@@ -232,15 +252,15 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 				tri.CheckForEatTogether(Agars[c.RoomID][c.Client_id].Agars)
 			}
 
-			if directions["y"] < 0 {
-				directions["y"] = 0
+			if directions["y"]-agarObject.Radius < 0 {
+				directions["y"] = agarObject.Radius
 			}
 			if directions["y"] > 3000 {
 				directions["y"] = 3000
 			}
 
-			if directions["x"] < 0 {
-				directions["x"] = 0
+			if directions["x"]-agarObject.Radius < 0 {
+				directions["x"] = agarObject.Radius
 			}
 			if directions["x"] > 3000 {
 				directions["x"] = 3000
@@ -260,7 +280,7 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 			// check agar eat bead
 			eat := dir.GetAgarSpace5(sss, c.RoomID)
 			if eat.Eat {
-				fmt.Println("eat", eat.Eat_key)
+				// fmt.Println("eat", eat.Eat_key)
 				eatKeys, err := json.Marshal(eat.Eat_key)
 				if err != nil {
 					return
@@ -295,6 +315,10 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 			// check for other user agars if they eat together
 			for _, v := range Agars[c.RoomID] {
 				if int64(v.Client_id) != c.Client_id {
+					if len(Agars[c.RoomID][int64(v.Client_id)].Agars) == 0 {
+						delete(Agars[c.RoomID], int64(v.Client_id))
+						continue
+					}
 					checkForOtherAgars := agar.AllAgars{
 						ClientId: int(c.Client_id),
 						RivalId:  v.Client_id,
@@ -306,8 +330,27 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 					}
 					res := checkForOtherAgars.CheckForAgarEatingOtherAgars()
 					if res.Status {
+						EatAgarsArrayHandler := &agar_arrays.Agars{
+							Agars: Agars[c.RoomID][int64(res.EatClientId)].Agars,
+						}
+						EatenAgarsArrayHandler := &agar_arrays.Agars{
+							Agars: Agars[c.RoomID][int64(res.EatenClientId)].Agars,
+						}
+						EatAgarIndex := EatAgarsArrayHandler.GETAgarIndexWithId(res.EatAgarId)
+						EatenAgarIndex := EatenAgarsArrayHandler.GETAgarIndexWithId(res.EatenAgarId)
+						Agars[c.RoomID][int64(res.EatClientId)].Agars[EatAgarIndex].Radius += Agars[c.RoomID][int64(res.EatenClientId)].Agars[EatenAgarIndex].Radius
+
 						if res.EatenAgarId == 1 {
+							fmt.Println("----------------------------------------------> ")
 							Agars[c.RoomID][int64(res.EatenClientId)].Agars = make([]trigonometric_circle.AgarDe, 0)
+							var resp map[string]string = make(map[string]string)
+							resp["Command"] = "/finish_game"
+							resp["LooserId"] = fmt.Sprintf("%v", int(res.EatenClientId))
+							jData, _ := json.Marshal(resp)
+							c.Hub.Broadcast <- &Message{
+								RoomID: c.RoomID,
+								Data:   jData,
+							}
 						} else {
 							agarsArrayHandler := &agar_arrays.Agars{
 								Agars: Agars[c.RoomID][int64(res.EatenClientId)].Agars,
@@ -334,7 +377,7 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 		}
 
 		c.Hub.Broadcast <- &Message{
-			roomID: c.RoomID,
+			RoomID: c.RoomID,
 			Data:   js,
 		}
 	case "/halfagar":
@@ -386,7 +429,7 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 
 		reeee, _ := json.Marshal(new_agar_response)
 		c.Hub.Broadcast <- &Message{
-			roomID: c.RoomID,
+			RoomID: c.RoomID,
 			Data:   []byte(reeee),
 		}
 
@@ -456,7 +499,7 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 							}
 
 							c.Hub.Broadcast <- &Message{
-								roomID: c.RoomID,
+								RoomID: c.RoomID,
 								Data:   js,
 							}
 						}
@@ -503,7 +546,7 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 								}
 
 								c.Hub.Broadcast <- &Message{
-									roomID: c.RoomID,
+									RoomID: c.RoomID,
 									Data:   js,
 								}
 							}
@@ -545,7 +588,7 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 									}
 
 									c.Hub.Broadcast <- &Message{
-										roomID: c.RoomID,
+										RoomID: c.RoomID,
 										Data:   js,
 									}
 								}
@@ -584,7 +627,7 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 			return
 		}
 		c.Hub.Broadcast <- &Message{
-			roomID: c.RoomID,
+			RoomID: c.RoomID,
 			Data:   js,
 		}
 	default:

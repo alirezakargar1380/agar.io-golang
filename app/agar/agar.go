@@ -37,6 +37,7 @@ type CheckForAgarEatingOtherAgarsResponse struct {
 	EatClientId   int
 	EatenClientId int
 	EatenAgarId   int
+	EatAgarId     int
 }
 
 func (agars *AllAgars) CheckForAgarEatingOtherAgars() CheckForAgarEatingOtherAgarsResponse {
@@ -53,11 +54,13 @@ func (agars *AllAgars) CheckForAgarEatingOtherAgars() CheckForAgarEatingOtherAga
 				response.EatClientId = agars.ClientId
 				response.EatenClientId = agars.RivalId
 				response.EatenAgarId = v.Id
+				response.EatAgarId = agars.Id
 			} else {
 				// fmt.Println(agars.RivalId, "is eating", agars.ClientId)
 				response.EatClientId = agars.RivalId
 				response.EatenClientId = agars.ClientId
 				response.EatenAgarId = agars.Id
+				response.EatAgarId = v.Id
 			}
 		}
 	}
