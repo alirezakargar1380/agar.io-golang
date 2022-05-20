@@ -201,10 +201,15 @@ func main() {
 	/* End Test Aggregate */
 
 	/* Test Aggregate */
+	id, _ := primitive.ObjectIDFromHex("628783c676d92eeb3aeac151")
 	lookupStage := bson.D{{"$lookup", bson.D{{"from", "sold_skins"}, {"localField", "_id"}, {"foreignField", "skin_id"}, {"as", "sold_skin"}}}}
-	unwindStage := bson.D{{"$unwind", bson.D{{"path", "$sold_skin"}, {"preserveNullAndEmptyArrays", false}}}}
+	unwindStage := bson.D{
+		{
+			"$unwind", bson.D{{"path", "$sold_skin"}, {"preserveNullAndEmptyArrays", false}},
+		},
+	}
 
-	showLoadedCursor, err := skinCollection.Aggregate(ctx, mongo.Pipeline{lookupStage, unwindStage})
+	showLoadedCursor, err := skinCollection.Aggregate(ctx, mongo.Pipeline{lookupStage, unwindStage, bson.D{{"$match", bson.D{{"sold_skin.buyed_userId", id}}}}})
 	if err != nil {
 		panic(err)
 	}
