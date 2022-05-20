@@ -1,22 +1,18 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"strconv"
-	"time"
 
-	redis_db "github.com/alirezakargar1380/agar.io-golang/app/service"
+	grpc_routers "github.com/alirezakargar1380/agar.io-golang/app/grpc"
 	"github.com/alirezakargar1380/agar.io-golang/app/socket"
 	"github.com/alirezakargar1380/agar.io-golang/app/trigonometric_circle"
-	"github.com/go-redis/redis"
+	"github.com/alirezakargar1380/agar.io-golang/test_log"
 	"github.com/gorilla/websocket"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"google.golang.org/grpc"
 )
 
 var upgrader = websocket.Upgrader{
@@ -110,119 +106,30 @@ func setupRoutes() {
 	})
 }
 
-type Sold_skin struct {
-	ID           primitive.ObjectID `bson:"_id,omitempty"`
-	Buyed_userId primitive.ObjectID `bson:"buyed_userId,omitempty"`
-	Skin_id      primitive.ObjectID `bson:"skin_id,omitempty"`
-}
-
-type Skin struct {
-	ID   primitive.ObjectID `bson:"_id,omitempty"`
-	Name primitive.ObjectID `bson:"name,omitempty"`
-}
-
 func main() {
-	fmt.Println("hello im backEnd agario")
 
-	redis_db.Client = &redis_db.RedisDb{
-		Client: redis.NewClient(&redis.Options{
-			Addr:     "127.0.0.1:6379",
-			Password: "",
-			DB:       0,
-		}),
-	}
-
-	// pong, err := redis_db.Client.Client.Ping().Result()
-	// if err == nil {
-	// 	fmt.Println(pong)
-	// } else {
-	// 	panic(err)
+	// redis_db.Client = &redis_db.RedisDb{
+	// 	Client: redis.NewClient(&redis.Options{
+	// 		Addr:     "127.0.0.1:6379",
+	// 		Password: "",
+	// 		DB:       0,
+	// 	}),
 	// }
 
-	// TEST MONGO DB
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	err = client.Connect(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer client.Disconnect(ctx)
+	go func() {
+		fmt.Println("hello im backEnd agario")
+		setupRoutes()
+		log.Fatal(http.ListenAndServe(":8080", nil))
+	}()
 
-	database := client.Database("agario")
-	skinCollection := database.Collection("skins")
-	// database2 := client.Database("quickstart")
-	// episodesCollection := database2.Collection("episodes")
-	// podcastCollection := database2.Collection("podcasts")
-
-	/* Insert document */
-	// user_id, _ := primitive.ObjectIDFromHex("628755681570972e5901c8e6")
-	// skin_id, _ := primitive.ObjectIDFromHex("62876b848cf65ce052830d4e")
-	// user := bson.D{
-	// 	{"buyed_userId", user_id},
-	// 	{"skin_id", skin_id},
-	// }
-	// collection.InsertOne(ctx, user)
-	/* End Insert document */
-
-	/* Test Aggregate */
-	// id, _ := primitive.ObjectIDFromHex("5e3b37e51c9d4400004117e6")
-	// lookupStage := bson.D{{"$lookup", bson.D{{"from", "podcasts"}, {"localField", "podcast"}, {"foreignField", "_id"}, {"as", "podcast"}}}}
-	// unwindStage := bson.D{{"$unwind", bson.D{{"path", "$podcast"}, {"preserveNullAndEmptyArrays", false}}}}
-
-	// showLoadedCursor, err := episodesCollection.Aggregate(ctx, mongo.Pipeline{lookupStage, unwindStage})
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// var showsLoaded []bson.M
-	// if err = showLoadedCursor.All(ctx, &showsLoaded); err != nil {
-	// 	panic(err)
-	// }
-	// fmt.Println(showsLoaded)
-	/* End Test Aggregate */
-
-	// -------------------------------------------------------------------------------------------------------------
-
-	/* Test Aggregate */
-	// lookupStage := bson.D{{"$lookup", bson.D{{"from", "episodes"}, {"localField", "_id"}, {"foreignField", "podcast"}, {"as", "episode"}}}}
-	// unwindStage := bson.D{{"$unwind", bson.D{{"path", "$episode"}, {"preserveNullAndEmptyArrays", false}}}}
-
-	// showLoadedCursor, err := podcastCollection.Aggregate(ctx, mongo.Pipeline{lookupStage, unwindStage})
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// var showsLoaded []bson.M
-	// if err = showLoadedCursor.All(ctx, &showsLoaded); err != nil {
-	// 	panic(err)
-	// }
-	// fmt.Println(showsLoaded)
-	/* End Test Aggregate */
-
-	/* Test Aggregate */
-	id, _ := primitive.ObjectIDFromHex("628783c676d92eeb3aeac151")
-	lookupStage := bson.D{{"$lookup", bson.D{{"from", "sold_skins"}, {"localField", "_id"}, {"foreignField", "skin_id"}, {"as", "sold_skin"}}}}
-	unwindStage := bson.D{
-		{
-			"$unwind", bson.D{{"path", "$sold_skin"}, {"preserveNullAndEmptyArrays", false}},
-		},
-	}
-
-	showLoadedCursor, err := skinCollection.Aggregate(ctx, mongo.Pipeline{lookupStage, unwindStage, bson.D{{"$match", bson.D{{"sold_skin.buyed_userId", id}}}}})
+	lis, err := net.Listen("tcp", ":9000")
 	if err != nil {
 		panic(err)
 	}
-	var showsLoaded []bson.M
-	if err = showLoadedCursor.All(ctx, &showsLoaded); err != nil {
-		panic(err)
-	}
-	fmt.Println(showsLoaded)
-	/* End Test Aggregate */
+	grpcServer := grpc.NewServer()
+	s := grpc_routers.Serverr{}
+	test_log.RegisterUserServiceServer(grpcServer, &s)
 
-	// END - TEST MONGO DB
-
-	return
-	setupRoutes()
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	fmt.Println("server grpc")
+	grpcServer.Serve(lis)
 }
