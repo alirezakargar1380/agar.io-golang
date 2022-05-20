@@ -117,14 +117,18 @@ func main() {
 		}),
 	}
 
-	pong, err := redis_db.Client.Client.Ping().Result()
-	if err == nil {
-		fmt.Println(pong)
-	} else {
-		panic(err)
-	}
+	// pong, err := redis_db.Client.Client.Ping().Result()
+	// if err == nil {
+	// 	fmt.Println(pong)
+	// } else {
+	// 	panic(err)
+	// }
 
-	// return
+	// TEST MONGO DB
+
+	// END - TEST MONGO DB
+
+	return
 	setupRoutes()
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
