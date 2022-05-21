@@ -12,7 +12,7 @@ import (
 	"github.com/alirezakargar1380/agar.io-golang/app/beads"
 	redis_db "github.com/alirezakargar1380/agar.io-golang/app/service"
 	"github.com/alirezakargar1380/agar.io-golang/app/trigonometric_circle"
-	agar_arrays "github.com/alirezakargar1380/agar.io-golang/app/utils"
+	"github.com/alirezakargar1380/agar.io-golang/app/utils"
 	"github.com/gorilla/websocket"
 )
 
@@ -302,7 +302,7 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 			}
 			eatTogetherResult := checkAgars.CheckForEating()
 			if eatTogetherResult.Status {
-				agarsArrayHandler := &agar_arrays.Agars{
+				agarsArrayHandler := &utils.Agars{
 					Agars: Agars[c.RoomID][c.Client_id].Agars,
 				}
 				Eated_agar_by_index := agarsArrayHandler.GETAgarIndexWithId(eatTogetherResult.Eated_agar_by_id)
@@ -330,10 +330,10 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 					}
 					res := checkForOtherAgars.CheckForAgarEatingOtherAgars()
 					if res.Status {
-						EatAgarsArrayHandler := &agar_arrays.Agars{
+						EatAgarsArrayHandler := &utils.Agars{
 							Agars: Agars[c.RoomID][int64(res.EatClientId)].Agars,
 						}
-						EatenAgarsArrayHandler := &agar_arrays.Agars{
+						EatenAgarsArrayHandler := &utils.Agars{
 							Agars: Agars[c.RoomID][int64(res.EatenClientId)].Agars,
 						}
 						EatAgarIndex := EatAgarsArrayHandler.GETAgarIndexWithId(res.EatAgarId)
@@ -352,7 +352,7 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 								Data:   jData,
 							}
 						} else {
-							agarsArrayHandler := &agar_arrays.Agars{
+							agarsArrayHandler := &utils.Agars{
 								Agars: Agars[c.RoomID][int64(res.EatenClientId)].Agars,
 							}
 							EatenAgarIndex := agarsArrayHandler.GETAgarIndexWithId(res.EatenAgarId)
@@ -523,7 +523,7 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 							}
 							eatTogetherResult := checkAgars.CheckForEatingWhenT()
 							if eatTogetherResult.Status {
-								agarsArrayHandler := &agar_arrays.Agars{
+								agarsArrayHandler := &utils.Agars{
 									Agars: Agars[c.RoomID][c.Client_id].Agars,
 								}
 								Eated_agar_by_index := agarsArrayHandler.GETAgarIndexWithId(eatTogetherResult.Eated_agar_by_id)
@@ -567,7 +567,7 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 										if res.EatenAgarId == 1 {
 											Agars[c.RoomID][int64(res.EatenClientId)].Agars = make([]trigonometric_circle.AgarDe, 0)
 										} else {
-											agarsArrayHandler := &agar_arrays.Agars{
+											agarsArrayHandler := &utils.Agars{
 												Agars: Agars[c.RoomID][int64(res.EatenClientId)].Agars,
 											}
 											EatenAgarIndex := agarsArrayHandler.GETAgarIndexWithId(res.EatenAgarId)

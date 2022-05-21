@@ -1,4 +1,4 @@
-package agar_arrays
+package utils
 
 import (
 	"github.com/alirezakargar1380/agar.io-golang/app/trigonometric_circle"
