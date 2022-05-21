@@ -38,6 +38,7 @@ func main() {
 	/*	setup Routers	*/
 	fmt.Println("hello im backEnd agario")
 	routers.SocketRouters()
+	routers.ApiRouters()
 	/*	setup Routers	*/
 
 	srv := &http.Server{
