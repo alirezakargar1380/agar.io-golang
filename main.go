@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/alirezakargar1380/agar.io-golang/app/api/routers"
 	"github.com/alirezakargar1380/agar.io-golang/app/endpoints"
-	"github.com/alirezakargar1380/agar.io-golang/app/routers"
 	redis_db "github.com/alirezakargar1380/agar.io-golang/app/service"
 	"github.com/alirezakargar1380/agar.io-golang/app/socket"
 	"github.com/go-redis/redis"
