@@ -24,6 +24,7 @@ func ApiRouters() {
 
 	Router.Handle("/users/sign_up", adapter.Adapt(
 		handlers.Users_SignUp_Handler(),
+		middlewares.CheckThisUserIsCreatedBefore(),
 		middlewares.Add_application_json_header(),
 	)).Methods("POST")
 
