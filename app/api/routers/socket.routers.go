@@ -1,7 +1,7 @@
 package routers
 
 import (
-	"github.com/alirezakargar1380/agar.io-golang/app/endpoints"
+	"github.com/alirezakargar1380/agar.io-golang/app/api/endpoints"
 )
 
 // func SocketRouters(w http.ResponseWriter, r *http.Request) {
