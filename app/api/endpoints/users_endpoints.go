@@ -45,3 +45,7 @@ func Users_SignIn_endpoint(w http.ResponseWriter, r *http.Request) {
 func Users_SignUp_endpoint(w http.ResponseWriter, r *http.Request) {
 
 }
+
+func Get_Users_endpoint(w http.ResponseWriter, r *http.Request) {
+
+}

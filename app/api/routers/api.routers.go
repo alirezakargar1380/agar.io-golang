@@ -16,19 +16,23 @@ func ApiRouters() {
 	)).Methods("POST")
 	/* TEST ROUTERS */
 
-	// Router.HandleFunc("/users/sigh_in", adapter.Adapt(
-
-	// )).Methods("POST")
-
 	/*	USER ROUTERS	*/
 	Router.Handle("/users/sign_in", adapter.Adapt(
 		handlers.Users_SignIn_Handler(),
 		middlewares.Add_application_json_header(),
 	)).Methods("POST")
+
 	Router.Handle("/users/sign_up", adapter.Adapt(
 		handlers.Users_SignUp_Handler(),
 		middlewares.Add_application_json_header(),
 	)).Methods("POST")
+
+	Router.Handle("/users/get_users/{page_number}", adapter.Adapt(
+		handlers.Get_Users_Handler(),
+		middlewares.Add_application_json_header(),
+		middlewares.CheckIsAdmin(),
+		middlewares.CheckTokenisValidate(),
+	)).Methods("GET")
 	/*	USER ROUTERS	*/
 
 	/*	SKIN ROUTERS	*/
