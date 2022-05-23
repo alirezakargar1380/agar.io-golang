@@ -10,7 +10,7 @@ import (
 
 	"github.com/alirezakargar1380/agar.io-golang/app/agar"
 	"github.com/alirezakargar1380/agar.io-golang/app/beads"
-	redis_db "github.com/alirezakargar1380/agar.io-golang/app/service"
+	"github.com/alirezakargar1380/agar.io-golang/app/databases"
 	"github.com/alirezakargar1380/agar.io-golang/app/trigonometric_circle"
 	"github.com/alirezakargar1380/agar.io-golang/app/utils"
 	"github.com/gorilla/websocket"
@@ -84,7 +84,7 @@ func (c *Client) ReadPump() {
 		for {
 			select {
 			case <-ticker.C:
-				if redis_db.Client.CountStars(c.RoomID) >= 110 {
+				if databases.Client.CountStars(c.RoomID) >= 110 {
 					continue
 				} else {
 					min := 500
@@ -96,7 +96,7 @@ func (c *Client) ReadPump() {
 					p["x"] = fmt.Sprintf("%v", x)
 					p["y"] = fmt.Sprintf("%v", y)
 					key := p["x"] + "_" + p["y"]
-					redis_db.Client.AddStar(key, c.RoomID)
+					databases.Client.AddStar(key, c.RoomID)
 					// Gamebeads.Set(c.RoomID, key)
 					json, _ := json.Marshal(p)
 					c.Hub.Broadcast <- &Message{
@@ -275,7 +275,7 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 				Radius: int(Agars[c.RoomID][c.Client_id].Agars[i].Radius),
 			}
 
-			sss := redis_db.Client.GetStars(c.RoomID)
+			sss := databases.Client.GetStars(c.RoomID)
 			// fmt.Println(sss)
 			// check agar eat bead
 			eat := dir.GetAgarSpace5(sss, c.RoomID)
@@ -286,7 +286,7 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 					return
 				}
 				res["eat_key"] = string(eatKeys)
-				redis_db.Client.DeleteStart(c.RoomID, eat.Eat_key)
+				databases.Client.DeleteStart(c.RoomID, eat.Eat_key)
 				if Agars[c.RoomID][c.Client_id].Agars[i].Radius < 450 {
 					Agars[c.RoomID][c.Client_id].Agars[i].Radius += 2
 				}
@@ -611,7 +611,7 @@ func (c *Client) sendResponse(beads *beads.Beads, command interface{}, data inte
 			fmt.Println(err)
 			return
 		}
-		sss := redis_db.Client.GetStars(c.RoomID)
+		sss := databases.Client.GetStars(c.RoomID)
 		beadss, err := json.Marshal(sss)
 		if err != nil {
 			fmt.Println(err)

@@ -1,4 +1,4 @@
-package redis_db
+package databases
 
 import (
 	"encoding/json"

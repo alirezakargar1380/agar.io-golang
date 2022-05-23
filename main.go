@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/alirezakargar1380/agar.io-golang/app/api/endpoints"
 	"github.com/alirezakargar1380/agar.io-golang/app/api/routers"
-	"github.com/alirezakargar1380/agar.io-golang/app/endpoints"
-	redis_db "github.com/alirezakargar1380/agar.io-golang/app/service"
+	"github.com/alirezakargar1380/agar.io-golang/app/databases"
 	"github.com/alirezakargar1380/agar.io-golang/app/socket"
 	"github.com/go-redis/redis"
 )
@@ -18,7 +18,7 @@ func main() {
 		initialize redis db
 	*/
 
-	redis_db.Client = &redis_db.RedisDb{
+	databases.Client = &databases.RedisDb{
 		Client: redis.NewClient(&redis.Options{
 			Addr:     "127.0.0.1:6379",
 			Password: "",
