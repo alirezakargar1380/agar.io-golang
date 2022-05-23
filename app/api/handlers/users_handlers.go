@@ -9,3 +9,7 @@ import (
 func Users_SignIn_Handler() http.Handler {
 	return http.HandlerFunc(endpoints.Users_SignIn_endpoint)
 }
+
+func Users_SignUp_Handler() http.Handler {
+	return http.HandlerFunc(endpoints.Users_SignUp_endpoint)
+}

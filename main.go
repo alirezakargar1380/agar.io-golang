@@ -14,6 +14,7 @@ import (
 )
 
 func main() {
+	databases.Initial_mongo_db()
 	/*
 		initialize redis db
 	*/

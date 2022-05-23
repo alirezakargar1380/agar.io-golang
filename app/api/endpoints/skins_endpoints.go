@@ -8,12 +8,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/alirezakargar1380/agar.io-golang/app/databases"
 	"github.com/alirezakargar1380/agar.io-golang/app/utils"
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Book struct {
@@ -32,23 +32,13 @@ type Skin struct {
 }
 
 func AddSkinEndpoint(w http.ResponseWriter, r *http.Request) {
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	err = client.Connect(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer client.Disconnect(ctx)
-
-	database := client.Database("agario")
+	database := databases.Mongodb_client.Database("agario")
 	var skinCollection *mongo.Collection = database.Collection("skins")
 	user := bson.D{
 		{"name", "test_skin"},
 	}
 
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	res, err := skinCollection.InsertOne(ctx, user)
 	if err != nil {
 		log.Fatal(err)
@@ -71,18 +61,7 @@ func GetSkinsEndpoint(w http.ResponseWriter, r *http.Request) {
 	utils.ParseBody(r, body)
 	fmt.Println(body)
 
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	err = client.Connect(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer client.Disconnect(ctx)
-
-	database := client.Database("agario")
+	database := databases.Mongodb_client.Database("agario")
 	skinCollection := database.Collection("skins")
 
 	showLoadedCursor, err := skinCollection.Aggregate(context.TODO(), []bson.M{
@@ -136,7 +115,8 @@ func GetSkinsEndpoint(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	// var showsLoaded []bson.M
+
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	var showsLoaded []Skin
 	if err = showLoadedCursor.All(ctx, &showsLoaded); err != nil {
 		panic(err)
