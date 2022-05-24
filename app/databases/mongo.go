@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -15,7 +16,8 @@ var Mongo_Context context.Context
 
 func Initial_mongo_db() {
 	fmt.Println("initial mongodb")
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
+	mongo_url := os.Getenv("mongo_db_url")
+	client, err := mongo.NewClient(options.Client().ApplyURI(mongo_url))
 	if err != nil {
 		log.Fatal(err)
 	}
