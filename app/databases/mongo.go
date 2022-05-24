@@ -13,6 +13,8 @@ import (
 
 var Mongodb_client *mongo.Client
 var Mongo_Context context.Context
+var agarIoDB *mongo.Database
+var UsersCollection *mongo.Collection
 
 func Initial_mongo_db() {
 	fmt.Println("initial mongodb")
@@ -30,4 +32,6 @@ func Initial_mongo_db() {
 	// defer Mongodb_client.Disconnect(ctx)
 	// Mongo_Context = ctx
 	Mongodb_client = client
+	agarIoDB = Mongodb_client.Database("agario")
+	UsersCollection = agarIoDB.Collection("users")
 }

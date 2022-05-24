@@ -30,7 +30,7 @@ func ApiRouters() {
 		middlewares.Add_application_json_header(),
 	)).Methods("POST")
 
-	Router.Handle("/users/get_users/{page_number}", adapter.Adapt(
+	Router.Handle("/users/get_all_users/{page_number}", adapter.Adapt(
 		handlers.Get_Users_Handler(),
 		middlewares.Add_application_json_header(),
 		middlewares.CheckIsAdmin(),
