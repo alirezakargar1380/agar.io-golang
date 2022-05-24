@@ -8,6 +8,8 @@ import (
 )
 
 func ApiRouters() {
+	Coins()
+
 	/* TEST ROUTERS */
 	Router.Handle("/m/t", adapter.Adapt(
 		handlers.Test_main_handler(),
