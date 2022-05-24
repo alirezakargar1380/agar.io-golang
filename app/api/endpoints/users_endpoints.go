@@ -5,16 +5,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/alirezakargar1380/agar.io-golang/app/databases"
 	"github.com/alirezakargar1380/agar.io-golang/app/types/users_types"
 	"github.com/alirezakargar1380/agar.io-golang/app/utils"
 	"github.com/alirezakargar1380/agar.io-golang/app/validation"
+	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-
-	"net/http"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func Users_SignIn_endpoint(w http.ResponseWriter, r *http.Request) {
@@ -65,6 +67,34 @@ func Users_SignUp_endpoint(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(result)
 }
 
-func Get_Users_endpoint(w http.ResponseWriter, r *http.Request) {
+func Get_All_Users_endpoint(w http.ResponseWriter, r *http.Request) {
+	var allData []bson.M = []bson.M{}
+	var result bson.M
 
+	findOptions := options.Find()
+	params := mux.Vars(r)
+	user_id := params["page_number"]
+	page_num, _ := strconv.ParseInt(user_id, 10, 64)
+	pageNumber := page_num - 1
+	findOptions.SetSkip(int64(pageNumber) * 10)
+	findOptions.SetLimit(int64(pageNumber)*10 + 10)
+	// findOptions.SetSort(bson.D{{}})
+
+	showLoadedCursor, err := databases.UsersCollection.Find(context.TODO(), bson.D{{}}, findOptions)
+	if err != nil {
+		panic(err)
+	}
+
+	for showLoadedCursor.Next(context.TODO()) {
+		result = bson.M{}
+		err := showLoadedCursor.Decode(&result)
+		if err != nil {
+			panic(err)
+		}
+		allData = append(allData, result)
+	}
+	fmt.Println(len(allData))
+
+	resData, _ := json.Marshal(allData)
+	w.Write(resData)
 }

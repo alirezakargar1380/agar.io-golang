@@ -15,5 +15,5 @@ func Users_SignUp_Handler() http.Handler {
 }
 
 func Get_Users_Handler() http.Handler {
-	return http.HandlerFunc(endpoints.Get_Users_endpoint)
+	return http.HandlerFunc(endpoints.Get_All_Users_endpoint)
 }
