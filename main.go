@@ -11,9 +11,19 @@ import (
 	"github.com/alirezakargar1380/agar.io-golang/app/databases"
 	"github.com/alirezakargar1380/agar.io-golang/app/socket"
 	"github.com/go-redis/redis"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	/*
+		.env file
+	*/
+	err := godotenv.Load("config/config.env")
+
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
+
 	databases.Initial_mongo_db()
 	/*
 		initialize redis db
