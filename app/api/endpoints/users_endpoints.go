@@ -73,12 +73,16 @@ func Get_All_Users_endpoint(w http.ResponseWriter, r *http.Request) {
 
 	findOptions := options.Find()
 	params := mux.Vars(r)
-	user_id := params["page_number"]
-	page_num, _ := strconv.ParseInt(user_id, 10, 64)
-	pageNumber := page_num - 1
-	findOptions.SetSkip(int64(pageNumber) * 10)
-	findOptions.SetLimit(int64(pageNumber)*10 + 10)
-	// findOptions.SetSort(bson.D{{}})
+	str_page_number := params["page_number"]
+	page_num, err := strconv.ParseInt(str_page_number, 10, 64)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("page number must be a number"))
+		return
+	}
+	page_num = page_num - 1
+	findOptions.SetSkip(int64(page_num) * 10)
+	findOptions.SetLimit(int64(page_num)*10 + 10)
 
 	showLoadedCursor, err := databases.UsersCollection.Find(context.TODO(), bson.D{{}}, findOptions)
 	if err != nil {
@@ -93,7 +97,6 @@ func Get_All_Users_endpoint(w http.ResponseWriter, r *http.Request) {
 		}
 		allData = append(allData, result)
 	}
-	fmt.Println(len(allData))
 
 	resData, _ := json.Marshal(allData)
 	w.Write(resData)
